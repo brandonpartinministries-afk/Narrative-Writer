@@ -70,6 +70,8 @@ textarea{min-height:64px;resize:vertical}
     <label class="f"><span>Dispatched location</span><input type="text" id="disp"></label>
     <label class="f" data-t="transfer 911 cancel"><span>Drop-off location</span><input type="text" id="drop"></label>
     <label class="f"><span>Transport reason</span><input type="text" id="reason"></label>
+    <label class="f"><span>Response mode</span><select id="rmode"><option value="">Select</option><option>emergent</option><option>non-emergent</option><option>emergent downgraded to non-emergent</option><option>non-emergent upgraded to emergent</option></select></label>
+    <label class="f"><span>Lights and sirens on response</span><select id="rsp"><option value="">Select</option><option>with lights and sirens</option><option>without lights and sirens</option></select></label>
   </fieldset>
 
   <fieldset data-t="cancel"><legend>Cancellation</legend>
@@ -106,11 +108,16 @@ textarea{min-height:64px;resize:vertical}
     <div class="row"><label class="f"><span>Pain (0-10)</span><input type="text" inputmode="numeric" id="pnS"></label><label class="f"><span>Pain location</span><input type="text" id="pnL"></label></div>
     <label class="f"><span>Pain description</span><input type="text" id="pnQ" placeholder="sharp, dull, pressure"></label>
     <div class="f pick" id="pk-mob"></div>
+    <div class="f pick" id="pk-dev"></div>
+    <label class="f"><span>Lines and devices notes (how secured)</span><input type="text" id="devnote"></label>
+    <label class="f"><span>Last known well (stroke)</span><input type="text" id="lkw" placeholder="time"></label>
     <div class="row"><label class="f"><span>Code status</span><select id="code"><option value="">Select</option><option>full code</option><option>DNR</option><option>DNR/DNI</option><option>POLST/MOLST on file</option><option>unknown</option></select></label><label class="f"><span>Isolation precautions</span><select id="iso"><option value="">Select</option><option>contact</option><option>droplet</option><option>airborne</option><option>contact and droplet</option></select></label></div>
   </fieldset>
-  <fieldset data-t="transfer 911"><legend>Treatment</legend>
+  <fieldset data-t="transfer 911"><legend>Treatment and impression</legend>
     <div class="f pick" id="pk-tx"></div>
     <label class="f"><span>Patient response to treatment</span><input type="text" id="txr"></label>
+    <label class="f"><span>Primary impression</span><select id="imp1"><option value="">Select</option><option>Abdominal pain</option><option>Allergic reaction</option><option>Altered mental status</option><option>Anxiety or behavioral</option><option>Back pain</option><option>Cardiac dysrhythmia</option><option>Chest pain</option><option>Dehydration</option><option>Fall injury</option><option>Generalized weakness</option><option>Hyperglycemia</option><option>Hypoglycemia</option><option>Hypertension</option><option>Hypotension</option><option>Infection or sepsis</option><option>Nausea or vomiting</option><option>Pain</option><option>Respiratory distress</option><option>Seizure</option><option>Stroke symptoms</option><option>Syncope</option><option>Traumatic injury</option><option value="Other">Other (type your own)</option></select></label><input type="text" id="imp1O" placeholder="Other primary impression" hidden style="margin-top:8px">
+    <label class="f"><span>Secondary impression</span><select id="imp2"><option value="">Select</option><option>Abdominal pain</option><option>Allergic reaction</option><option>Altered mental status</option><option>Anxiety or behavioral</option><option>Back pain</option><option>Cardiac dysrhythmia</option><option>Chest pain</option><option>Dehydration</option><option>Fall injury</option><option>Generalized weakness</option><option>Hyperglycemia</option><option>Hypoglycemia</option><option>Hypertension</option><option>Hypotension</option><option>Infection or sepsis</option><option>Nausea or vomiting</option><option>Pain</option><option>Respiratory distress</option><option>Seizure</option><option>Stroke symptoms</option><option>Syncope</option><option>Traumatic injury</option><option value="Other">Other (type your own)</option></select></label><input type="text" id="imp2O" placeholder="Other secondary impression" hidden style="margin-top:8px">
   </fieldset>
   <fieldset data-t="transfer 911" data-o="transport"><legend>Transport</legend>
     <div class="row">
@@ -120,7 +127,9 @@ textarea{min-height:64px;resize:vertical}
     <div class="f"><span>Baseline vitals</span><div class="vit" id="vt-base"></div></div>
     <div class="f"><span>Vitals reassessed in ambulance</span><div class="vit" id="vt-amb"></div></div>
     <div id="more-trans"></div><button type="button" class="btn alt sm" data-addv="trans" style="margin-top:10px">Add another set of vitals</button>
-    <label class="f"><span>Transport response</span><select id="tmode"><option value="">Select</option><option>with lights and sirens</option><option>without lights and sirens</option></select></label>
+    <label class="f"><span>Transport method</span><select id="tmeth"><option value="">Select</option><option>BLS ambulance</option><option>ALS ambulance</option><option>critical care transport</option><option>wheelchair van</option><option value="Other">Other (type your own)</option></select></label><input type="text" id="tmethO" placeholder="Other transport method" hidden style="margin-top:8px">
+    <label class="f"><span>Transport response mode</span><select id="tresp"><option value="">Select</option><option>emergent</option><option>non-emergent</option><option>emergent downgraded to non-emergent</option><option>non-emergent upgraded to emergent</option></select></label>
+    <label class="f"><span>Lights and sirens during transport</span><select id="tmode"><option value="">Select</option><option>with lights and sirens</option><option>without lights and sirens</option></select></label>
     <div class="f" data-t="911"><label><span>Radio report given prior to arrival via</span><select id="rpt"><option value="">Select</option><option>radio</option><option>cell phone</option><option>landline phone</option><option>mobile data terminal</option><option value="Other">Other (type your own)</option></select></label><input type="text" id="rptO" placeholder="Other method" hidden style="margin-top:8px"></div>
     <div class="f pick" id="pk-sec"></div>
     <div class="row">
@@ -129,10 +138,20 @@ textarea{min-height:64px;resize:vertical}
     </div>
     <label class="f"><span>Method of transfer at drop-off</span><input type="text" id="ameth"></label>
     <label class="f"><span>Condition upon arrival</span><select id="carr"><option value="">Select</option><option>stable</option><option>unchanged</option><option>improved</option><option>deteriorated</option></select></label>
+    <label class="f"><span>Reason for destination</span><select id="dreas"><option value="">Select</option><option>closest appropriate facility</option><option>patient choice</option><option>specialty center</option><option>physician request</option><option>facility or insurance request</option></select></label>
+    <label class="f"><span>Alert called</span><select id="dalert"><option value="">Select</option><option>stroke alert</option><option>STEMI alert</option><option>trauma alert</option><option>sepsis alert</option><option>cardiac arrest alert</option></select></label>
+    <div class="f pick" id="pk-eq"></div>
     <label class="f" data-t="transfer"><span>Report given to (nurse name)</span><input type="text" id="rn"></label>
     <div class="f pick" data-t="transfer" id="pk-necc"></div>
   </fieldset>
 
+  <fieldset data-t="transfer 911"><legend>Crew, times, and signatures</legend>
+    <div class="row"><label class="f"><span>Attendant</span><input type="text" id="att"></label><label class="f"><span>Cert level</span><select id="attC"><option value="">Select</option><option>EMR</option><option>EMT</option><option>AEMT</option><option>Paramedic</option><option>RN</option></select></label></div>
+    <div class="row"><label class="f"><span>Driver</span><input type="text" id="drv"></label><label class="f"><span>Cert level</span><select id="drvC"><option value="">Select</option><option>EMR</option><option>EMT</option><option>AEMT</option><option>Paramedic</option><option>RN</option></select></label></div>
+    <div class="row"><label class="f"><span>Dispatched</span><input type="time" id="tDisp"></label><label class="f"><span>En route</span><input type="time" id="tEnr"></label><label class="f"><span>On scene</span><input type="time" id="tScn"></label><label class="f"><span>Patient contact</span><input type="time" id="tPtc"></label><label class="f"><span>Departed scene</span><input type="time" id="tDep"></label><label class="f"><span>Arrived at destination</span><input type="time" id="tArr"></label><label class="f"><span>Transfer of care</span><input type="time" id="tTrf"></label><label class="f"><span>Back in service</span><input type="time" id="tSvc"></label><label class="f"><span>Loaded miles</span><input type="text" inputmode="decimal" id="miles"></label></div>
+    <div class="f pick" id="pk-sig"></div>
+    <label class="f"><span>If patient could not sign</span><select id="sigR"><option value="">Select</option><option>Patient was unable to sign due to medical condition</option><option>Patient was unable to sign and an authorized representative signed</option><option>Patient refused to sign</option></select></label>
+  </fieldset>
   <fieldset data-t="transfer 911" data-o="refusal"><legend>Patient refusal</legend>
     <div class="f"><span>Vitals obtained</span><div class="vit" id="vt-rvit"></div></div>
     <div id="more-ref"></div><button type="button" class="btn alt sm" data-addv="ref" style="margin-top:10px">Add another set of vitals</button>
@@ -167,6 +186,7 @@ function P(s){s=s.trim();return /[.!?]$/.test(s)?s:s+'.'}
 function narrative(){
   var u=v('unit','Unit Number'),d=v('disp','dispatched location'),dr=v('drop','drop off location'),r=v('reason','transport reason'),L=[];
   var head=S.t==='911'?u+' was dispatched to '+d+' for '+r+'.':u+' was dispatched to '+d+' to transport to '+dr+' for '+r+'.';
+  var rm=$('rmode').value,rs=$('rsp').value;if(rm||rs)head+=' '+u+' responded'+(rm?' '+rm:'')+(rs?' '+rs:'')+'.';
   L.push(head);
   if(S.t==='cancel'){
     var by=$('cby').value;if(by==='Other')by=$('cbyO').value.trim();
@@ -182,7 +202,7 @@ function narrative(){
   var al=PK.alg.s;ln.push('Patient has a history of '+pv('hx','history')+'. '+((al.length===1&&al[0]==='NKDA')?'Patient has no known drug allergies.':'Patient is allergic to '+pv('alg','allergies')+'.')+' Patient takes '+pv('meds','medications')+'.'+codeIso());
   if(S.t==='transfer')ln.push('PTA vitals were obtained. '+P(vv('pta')));
   ln.push('BLS assessment was obtained. '+P(pv('bls','initial assessment')));
-  var ad=addl();if(ad)ln.push(ad);var tx=txline();if(tx)ln.push(tx);
+  var ad=addl();if(ad)ln.push(ad);var dv=devline();if(dv)ln.push(dv);var tx=txline();if(tx)ln.push(tx);var im=impline();if(im)ln.push(im);
   if(S.o==='refusal'){
     ln.push('Vitals were obtained. '+P(vv('rvit')));
     extraSets('more-ref').forEach(function(t){ln.push(t)});
@@ -198,22 +218,24 @@ function narrative(){
     var a=$('adv').value.trim();
     if(a)lf+=' Patient was advised to call 911 or seek care if '+P(a);
     ln.push(lf);
-    ln.push('Refusal paperwork was completed. All signatures were obtained.');
-    return L.concat(ln);
+    ln.push('Refusal paperwork was completed. '+sigline());
+    return L.concat(ln).concat(tail());
   }
   ln.push('Patient was transferred '+v('xfer','from / to')+' via '+v('xmeth','method of transfer')+'.');
   ln.push('Patient was strapped x 5, Rails x 2.');
   ln.push('Baseline vitals were '+P(vv('base')));
   ln.push('Patient was transferred into ambulance where vitals were reassessed. '+P(vv('amb')));
-  ln.push('Patient was transported to '+dr+($('tmode').value?' '+$('tmode').value:'')+'.');
+  var tm=$('tmeth').value;if(tm==='Other')tm=$('tmethO').value.trim();
+  ln.push('Patient was transported to '+dr+(tm?' via '+tm:'')+($('tresp').value?', '+$('tresp').value:'')+($('tmode').value?($('tresp').value?', ':' ')+$('tmode').value:'')+'.');
   if(S.t==='911')ln.push('Radio report was given prior to arrival via '+rptv()+'.');
+  var dl=destline();if(dl)ln.push(dl);
   extraSets('more-trans').forEach(function(t){ln.push(t)});
   ln.push('Secondary assessment was obtained. '+P(pv('sec','assessment findings')));
   ln.push('Upon arrival at '+dr+', patient was transferred from '+v('afrom','bed, stretcher')+' onto '+v('ato','bed, chair')+' via '+v('ameth','method of transfer')+'.'+($('carr').value?' Patient condition upon arrival was '+$('carr').value+'.':''));
   if(S.t==='transfer')ln.push('Patient care, paperwork, and verbal report was transferred to '+v('rn','name of nurse')+'.');
-  ln.push('All signatures were obtained.');
+  ln.push(sigline());
   if(S.t==='transfer')ln.push('Patient requires transportation by ambulance due to '+P(pv('necc','medical necessity')));
-  return L.concat(ln);
+  return L.concat(ln).concat(tail());
 }
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function plain(){return narrative().join('\n\n').replace(/\{\{(.*?)\}\}/g,'($1)')}
@@ -227,6 +249,8 @@ function render(){
   $('outSeg').hidden=S.t==='cancel';
   $('nurseWrap').hidden=S.t==='cancel'||(S.t==='911'&&!$('snf').checked);
   $('rptO').hidden=$('rpt').value!=='Other';
+  $('tmethO').hidden=$('tmeth').value!=='Other';
+  $('imp1O').hidden=$('imp1').value!=='Other';$('imp2O').hidden=$('imp2').value!=='Other';
   $('cbyO').hidden=$('cby').value!=='Other';
   $('mcWrap').hidden=!$('mc').checked||S.t==='cancel'||S.o!=='refusal';
   $('out').innerHTML=narrative().map(function(p){return '<p>'+esc(p).replace(/\{\{(.*?)\}\}/g,'<span class="ph">($1)</span>')+'</p>'}).join('');
@@ -250,10 +274,13 @@ var ASSESS=['Alert and oriented x4','Alert and oriented x3','Alert and oriented 
 PK.necc={t:'Medical necessity for ambulance transport',s:[],sep:'; ',o:['Patient is bed-confined: unable to get up from bed without assistance, unable to ambulate, and unable to sit in a chair or wheelchair','Patient was bed-confined before and after the ambulance trip','Patient condition contraindicates other means of transportation','Medical condition requires ambulance transport regardless of bed confinement','Emergency situation (accident, injury, or acute illness)','Patient requires restraint to prevent injury to self or others','Patient must remain immobile due to a fracture or possible fracture','Requires advanced airway management','Morbid obesity requiring additional personnel or equipment','Requires oxygen therapy and monitoring during transport','Requires cardiac monitoring during transport','Requires IV or medication monitoring during transport','Requires skilled medical monitoring en route','Altered mental status','Hemodynamic instability','Paralysis or hemiparesis']};
 PK.mob={t:'Mobility',s:[],sep:'; ',o:['Unable to bear weight','Unable to stand','Unable to ambulate','Unable to sit upright in a wheelchair','Bed-confined','Requires assistance of two or more staff','Ambulatory with assistance','Uses wheelchair at baseline','Uses walker','Contractures','Paralysis or hemiparesis']};
 PK.tx={t:'Treatment provided',s:[],sep:'; ',o:['Oxygen applied','IV access established','Cardiac monitor applied','12-lead ECG obtained','Blood glucose checked','Bleeding controlled','Splint applied','Spinal motion restriction','Suctioned airway','Patient positioned for comfort']};
+PK.dev={t:'Lines and devices',s:[],sep:'; ',o:['IV in place','IV pump infusing','PICC line','Foley catheter','Tracheostomy','Feeding tube','Ostomy','Surgical drain','Wound vac','Dialysis access','Oxygen concentrator']};
+PK.eq={t:'Equipment used',s:[],sep:'; ',o:['Stair chair','Bariatric cot','Slide sheet','Lift assist device','Power cot','Seat belt and restraints applied']};
+PK.sig={t:'Signatures obtained from',s:[],o:['Patient','Nurse','Facility representative','Receiving facility staff','Authorized representative']};
 PK.bls={t:'BLS (initial) assessment',o:ASSESS,s:[],sep:'; '};
 PK.sec={t:'Secondary assessment findings',o:ASSESS,s:[],sep:'; '};
 function pv(k,l){var p=PK[k],s=p.s;return s.length?(p.sep?s.join(p.sep):jn(s)):'{{'+l+'}}'}
-var SV={unit:[],disp:[],drop:[],reason:[]},SVK='epcr-saved-v1';
+var SV={unit:[],disp:[],drop:[],reason:[],att:[],drv:[]},SVK='epcr-saved-v1';
 try{var raw=localStorage.getItem(SVK);if(raw){var so=JSON.parse(raw);for(var sk in SV)if(Array.isArray(so[sk]))SV[sk]=so[sk]}}catch(e){}
 function svStore(){try{localStorage.setItem(SVK,JSON.stringify(SV))}catch(e){}}
 function svDraw(k){var h='<button type="button" class="btn alt sm" data-svsave="'+k+'">Save entry</button>';
@@ -286,11 +313,24 @@ function codeIso(){var t='',c=$('code').value,i=$('iso').value;if(c)t+=' Patient
 function addl(){var o=[],a=$('mntB').value,b=$('mntC').value;
 if(a&&b)o.push('Baseline mental status was '+a+' and current mental status is '+b+'.');else if(a)o.push('Baseline mental status was '+a+'.');else if(b)o.push('Current mental status is '+b+'.');
 var g=$('gcs').value.trim();if(g)o.push('GCS was '+g+'.');
-var st=$('strk').value;if(st)o.push('Stroke screen was '+st+'.');
+var st=$('strk').value;if(st)o.push('Stroke screen was '+st+'.');var lk=$('lkw').value.trim();if(lk)o.push('Last known well was '+lk+'.');
 var pn=$('pnS').value.trim();if(pn){if(pn==='0')o.push('Patient denied pain.');else{var pl=$('pnL').value.trim(),pq=$('pnQ').value.trim();o.push('Patient rated pain '+pn+'/10'+(pl?' located at '+pl:'')+(pq?', described as '+pq:'')+'.')}}
 if(PK.mob.s.length)o.push('Patient mobility: '+PK.mob.s.join('; ')+'.');
 return o.join(' ')}
 function txline(){var t='',r=$('txr').value.trim();if(PK.tx.s.length)t='Treatment provided included '+PK.tx.s.join('; ')+'.';if(r)t+=(t?' ':'')+'Patient response: '+P(r);return t}
+function selv(i,o){var m=$(i).value;return m==='Other'?$(o).value.trim():m}
+function impline(){var a=selv('imp1','imp1O'),b=selv('imp2','imp2O'),t='';if(a)t='Provider primary impression was '+a+'.';if(b)t+=(t?' ':'')+'Secondary impression was '+b+'.';return t}
+function devline(){var n=$('devnote').value.trim();return PK.dev.s.length?'Lines and devices present: '+PK.dev.s.join('; ')+'.'+(n?' '+P(n):''):''}
+function destline(){var o=[],r=$('dreas').value,a=$('dalert').value;if(r)o.push('Destination was chosen due to '+r+'.');if(a)o.push('A '+a+' was called to the receiving facility.');if(PK.eq.s.length)o.push('Equipment used: '+PK.eq.s.join('; ')+'.');return o.join(' ')}
+function sigline(){var t='All signatures were obtained.';if(PK.sig.s.length)t+=' Signatures were obtained from '+jn(PK.sig.s)+'.';var r=$('sigR').value;if(r)t+=' '+r+'.';return t}
+function tail(){var o=[],c=[],a=$('att').value.trim(),ac=$('attC').value,d=$('drv').value.trim(),dc=$('drvC').value;
+if(a)c.push('attendant '+a+(ac?' ('+ac+')':''));if(d)c.push('driver '+d+(dc?' ('+dc+')':''));
+if(c.length)o.push('Crew: '+c.join('; ')+'.');
+var T=[['tDisp','dispatched'],['tEnr','en route'],['tScn','on scene'],['tPtc','patient contact'],['tDep','departed scene'],['tArr','arrived at destination'],['tTrf','transfer of care'],['tSvc','back in service']],t=[];
+T.forEach(function(x){var q=$(x[0]).value;if(q)t.push(x[1]+' '+q.replace(':',''))});
+var m=$('miles').value.trim();
+if(t.length||m)o.push((t.length?'Incident times: '+t.join(', ')+'.':'')+(m?(t.length?' ':'')+'Loaded mileage: '+m+' miles.':''));
+return o}
 function rptv(){var m=$('rpt').value;if(m==='Other')m=$('rptO').value.trim();return m||'{{method of delivery}}'}
 function o2Found(){var sets=S.o==='refusal'?['rvit']:['base'];if(S.t==='transfer')sets.unshift('pta');
 for(var i=0;i<sets.length;i++){var t=sets[i];if($('vt-'+t+'-ox').checked){var l=$('vt-'+t+'-lpm').value.trim(),m=$('vt-'+t+'-mth').value;if(m==='Other')m=$('vt-'+t+'-oth').value.trim();return ' Patient was found on '+(l||'{{liters per minute}}')+' liters per minute via '+(m||'{{delivery method}}')+'.'}}return ''}
@@ -314,7 +354,7 @@ else if(b.dataset.rm){p.s.splice(+b.dataset.i,1)}
 else{var inp=$('add-'+k),x=inp.value.trim();if(x&&p.s.indexOf(x)<0)p.s.push(x);inp.value='';pk(k);$('add-'+k).focus();render();return}
 pk(k);render()});
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.id&&e.target.id.indexOf('add-')===0){e.preventDefault();e.target.parentNode.querySelector('button').click()}});
-var oldReset=$('reset').onclick;$('reset').onclick=function(){for(var k in PK)PK[k].s=[];oldReset();['rpt','mntB','mntC','strk','code','iso','cby','cpc','tmode','carr'].forEach(function(i){$(i).value=''});$('ama').checked=false;o2Reset();pkAll()};
+var oldReset=$('reset').onclick;$('reset').onclick=function(){for(var k in PK)PK[k].s=[];oldReset();['imp1','imp2','dreas','dalert','sigR','attC','drvC','rmode','tresp','rsp','tmeth','rpt','mntB','mntC','strk','code','iso','cby','cpc','tmode','carr'].forEach(function(i){$(i).value=''});$('ama').checked=false;['tDisp','tEnr','tScn','tPtc','tDep','tArr','tTrf','tSvc'].forEach(function(i){$(i).value=''});o2Reset();pkAll()};
 svInit();vitAll();pkAll();
 render();
 </script>

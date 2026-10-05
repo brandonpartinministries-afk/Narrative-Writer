@@ -46,6 +46,7 @@ textarea{min-height:64px;resize:vertical}
 .vit{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}.vit label span{font-size:.8rem;margin:0;color:var(--mute);display:block}
 .chip.pair{display:inline-flex;padding:0;overflow:hidden}.pair button{font:inherit;background:none;border:0;color:inherit;padding:6px 10px;cursor:pointer}.pair .x{padding:6px 9px;border-left:1px solid var(--line)}
 .btn.sm{padding:5px 10px;font-size:.85rem}.sv{align-items:center}
+.o2{grid-column:1/-1}.o2 .chk{margin-top:6px}.o2 .row{margin-top:8px}
 .hint{color:var(--mute);font-size:.85rem;margin:6px 0 0}
 [hidden]{display:none!important}
 </style></head>
@@ -151,7 +152,7 @@ function narrative(){
     return L;
   }
   var ln=[];
-  ln.push('Upon arrival at '+d+', '+u+' arrived onscene to find '+v('age','age')+' year old '+v('sex','sex')+' '+v('pos','position')+' on '+v('surf','floor, chair, bed')+'.');
+  ln.push('Upon arrival at '+d+', '+u+' arrived onscene to find '+v('age','age')+' year old '+v('sex','sex')+' '+v('pos','position')+' on '+v('surf','floor, chair, bed')+'.'+o2Found());
   var cc='Patient complained of '+v('cc','chief complaint')+'.';
   var c2=$('cc2').value.trim();if(c2)cc+=' Patient also complained of '+P(c2);
   if(S.t==='transfer'||$('snf').checked)cc+=' Nurse stated '+P(v('nreason','reason for transport'));
@@ -234,8 +235,24 @@ if((k=b.dataset.svsave)){var x=$(k).value.trim();if(x&&SV[k].indexOf(x)<0){SV[k]
 else if((k=b.dataset.svfill)){$(k).value=SV[k][+b.dataset.i];render()}
 else if((k=b.dataset.svdel)){SV[k].splice(+b.dataset.i,1);svStore();svDraw(k)}});
 var VF=[['bp','BP','BP','120/80',''],['hr','HR','HR','bpm',''],['rr','RR','RR','/min',''],['spo2','SpO2','SpO2','%','%'],['temp','Temp','temp','\u00b0F','\u00b0F'],['bgl','Glucose','BGL','mg/dL',' mg/dL'],['ht','Height','height','ft/in',''],['wt','Weight','weight','lbs',' lbs']];
-function vitAll(){['pta','base','amb','rvit'].forEach(function(set){var h='';VF.forEach(function(f){h+='<label><span>'+f[1]+'</span><input type="text" inputmode="'+(f[0]==='bp'||f[0]==='ht'?'text':'decimal')+'" id="vt-'+set+'-'+f[0]+'" placeholder="'+f[3]+'"></label>'});$('vt-'+set).innerHTML=h})}
-function vv(set){var a=[];VF.forEach(function(f){var x=$('vt-'+set+'-'+f[0]).value.trim();if(!x)return;if(f[4]&&/^[\d.]+$/.test(x))x+=f[4];a.push(f[2]+' '+x)});return a.length?a.join(', '):'{{vitals}}'}
+function vitAll(){['pta','base','amb','rvit'].forEach(function(set){var h='';VF.forEach(function(f){h+='<label><span>'+f[1]+'</span><input type="text" inputmode="'+(f[0]==='bp'||f[0]==='ht'?'text':'decimal')+'" id="vt-'+set+'-'+f[0]+'" placeholder="'+f[3]+'"></label>'});h+='<div class="o2"><label class="chk"><input type="checkbox" id="vt-'+set+'-ra"> Room air</label><label class="chk"><input type="checkbox" id="vt-'+set+'-ox"> Oxygen requirement</label><div id="vt-'+set+'-oxbox" hidden><div class="row"><label><span>Liters per minute</span><input type="text" inputmode="decimal" id="vt-'+set+'-lpm" placeholder="LPM"></label><label><span>Delivery method</span><select id="vt-'+set+'-mth"><option value="">Select</option>'+OM.map(function(m){return '<option value="'+m[0]+'">'+m[1]+'</option>'}).join('')+'<option value="Other">Other (type your own)</option></select></label></div><input type="text" id="vt-'+set+'-oth" placeholder="Other delivery method" hidden style="margin-top:8px"></div></div>';
+$('vt-'+set).innerHTML=h})}
+var OM=[['nasal cannula','Nasal cannula'],['high-flow nasal cannula','High-flow nasal cannula'],['simple face mask','Simple face mask'],['non-rebreather mask','Non-rebreather mask'],['Venturi mask','Venturi mask'],['CPAP','CPAP'],['BiPAP','BiPAP'],['bag-valve mask','Bag-valve mask'],['tracheostomy collar','Tracheostomy collar'],['home oxygen concentrator','Home oxygen concentrator'],['ventilator','Ventilator']];
+function o2Reset(){['pta','base','amb','rvit'].forEach(function(s){$('vt-'+s+'-ra').checked=false;$('vt-'+s+'-ox').checked=false;$('vt-'+s+'-mth').value='';$('vt-'+s+'-oxbox').hidden=true;$('vt-'+s+'-oth').hidden=true})}
+document.addEventListener('change',function(e){var m=(e.target.id||'').match(/^vt-(\w+)-(ra|ox|mth)$/);if(!m)return;var t=m[1];
+if(m[2]==='ra'&&e.target.checked)$('vt-'+t+'-ox').checked=false;
+if(m[2]==='ox'&&e.target.checked)$('vt-'+t+'-ra').checked=false;
+$('vt-'+t+'-oxbox').hidden=!$('vt-'+t+'-ox').checked;
+$('vt-'+t+'-oth').hidden=$('vt-'+t+'-mth').value!=='Other';
+render()});
+function o2Found(){var sets=S.o==='refusal'?['rvit']:['base'];if(S.t==='transfer')sets.unshift('pta');
+for(var i=0;i<sets.length;i++){var t=sets[i];if($('vt-'+t+'-ox').checked){var l=$('vt-'+t+'-lpm').value.trim(),m=$('vt-'+t+'-mth').value;if(m==='Other')m=$('vt-'+t+'-oth').value.trim();return ' Patient was found on '+(l||'{{liters per minute}}')+' liters per minute via '+(m||'{{delivery method}}')+'.'}}return ''}
+function vv(set){var a=[],ra=$('vt-'+set+'-ra').checked,ox=$('vt-'+set+'-ox').checked,o2='';
+if(ra)o2='room air';else if(ox){var l=$('vt-'+set+'-lpm').value.trim(),m=$('vt-'+set+'-mth').value;if(m==='Other')m=$('vt-'+set+'-oth').value.trim();o2=(l?l+' LPM':'')+(l&&m?' via ':'')+m;if(!o2)o2='supplemental oxygen'}
+VF.forEach(function(f){var x=$('vt-'+set+'-'+f[0]).value.trim();
+if(f[0]==='spo2'){if(x&&/^[\d.]+$/.test(x))x+='%';if(x)a.push('SpO2 '+x+(o2?' on '+o2:''));else if(o2)a.push('on '+o2);return}
+if(!x)return;if(f[4]&&/^[\d.]+$/.test(x))x+=f[4];a.push(f[2]+' '+x)});
+return a.length?a.join(', '):'{{vitals}}'}
 function pk(k){var p=PK[k],d=$('pk-'+k).querySelector('details');p.open=d?d.open:false;
 var h='<span>'+p.t+'</span><details'+(p.open?' open':'')+'><summary>Select from list or add your own</summary><div class="chips">';
 p.o.forEach(function(o,i){h+='<button type="button" class="chip" data-pk="'+k+'" data-i="'+i+'" aria-pressed="'+(p.s.indexOf(o)>-1)+'">'+esc(o)+'</button>'});
@@ -250,7 +267,7 @@ else if(b.dataset.rm){p.s.splice(+b.dataset.i,1)}
 else{var inp=$('add-'+k),x=inp.value.trim();if(x&&p.s.indexOf(x)<0)p.s.push(x);inp.value='';pk(k);$('add-'+k).focus();render();return}
 pk(k);render()});
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.id&&e.target.id.indexOf('add-')===0){e.preventDefault();e.target.parentNode.querySelector('button').click()}});
-var oldReset=$('reset').onclick;$('reset').onclick=function(){for(var k in PK)PK[k].s=[];oldReset();pkAll()};
+var oldReset=$('reset').onclick;$('reset').onclick=function(){for(var k in PK)PK[k].s=[];oldReset();o2Reset();pkAll()};
 svInit();vitAll();pkAll();
 render();
 </script>

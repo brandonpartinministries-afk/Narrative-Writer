@@ -48,6 +48,7 @@ textarea{min-height:64px;resize:vertical}
 .btn.sm{padding:5px 10px;font-size:.85rem}.sv{align-items:center}
 .o2{grid-column:1/-1}.o2 .chk{margin-top:6px}.o2 .row{margin-top:8px}
 .xrow{display:flex;gap:6px;margin-top:8px}.xrow input{flex:1;min-width:0}
+.miss{margin:0 0 8px;font-size:.9rem}
 .hint{color:var(--mute);font-size:.85rem;margin:6px 0 0}
 [hidden]{display:none!important}
 </style></head>
@@ -119,6 +120,14 @@ textarea{min-height:64px;resize:vertical}
     <label class="f"><span>Primary impression</span><select id="imp1"><option value="">Select</option><option>Abdominal pain</option><option>Allergic reaction</option><option>Altered mental status</option><option>Anxiety or behavioral</option><option>Back pain</option><option>Cardiac dysrhythmia</option><option>Chest pain</option><option>Dehydration</option><option>Fall injury</option><option>Generalized weakness</option><option>Hyperglycemia</option><option>Hypoglycemia</option><option>Hypertension</option><option>Hypotension</option><option>Infection or sepsis</option><option>Nausea or vomiting</option><option>Pain</option><option>Respiratory distress</option><option>Seizure</option><option>Stroke symptoms</option><option>Syncope</option><option>Traumatic injury</option><option value="Other">Other (type your own)</option></select></label><input type="text" id="imp1O" placeholder="Other primary impression" hidden style="margin-top:8px">
     <label class="f"><span>Secondary impression</span><select id="imp2"><option value="">Select</option><option>Abdominal pain</option><option>Allergic reaction</option><option>Altered mental status</option><option>Anxiety or behavioral</option><option>Back pain</option><option>Cardiac dysrhythmia</option><option>Chest pain</option><option>Dehydration</option><option>Fall injury</option><option>Generalized weakness</option><option>Hyperglycemia</option><option>Hypoglycemia</option><option>Hypertension</option><option>Hypotension</option><option>Infection or sepsis</option><option>Nausea or vomiting</option><option>Pain</option><option>Respiratory distress</option><option>Seizure</option><option>Stroke symptoms</option><option>Syncope</option><option>Traumatic injury</option><option value="Other">Other (type your own)</option></select></label><input type="text" id="imp2O" placeholder="Other secondary impression" hidden style="margin-top:8px">
   </fieldset>
+  <fieldset data-t="transfer 911"><legend>Specialty documentation</legend>
+    <label class="f"><span>Call type</span><select id="spec"><option value="">None</option><option value="stroke">Stroke</option><option value="stemi">STEMI</option><option value="arrest">Cardiac arrest</option><option value="trauma">Trauma</option><option value="sepsis">Sepsis</option></select></label>
+    <div class="sp" data-sp="stroke" hidden><label class="f"><span>Stroke scale used</span><select id="stscale"><option value="">Select</option><option>BE-FAST</option><option>Cincinnati</option><option>FAST-ED</option></select></label><div class="f pick" id="pk-stk"></div></div>
+    <div class="sp" data-sp="stemi" hidden><label class="f"><span>ST elevation leads</span><input type="text" id="stl" placeholder="II, III, aVF"></label><label class="f"><span>Symptom onset time</span><input type="text" id="stOn"></label><label class="chk"><input type="checkbox" id="asa"> Aspirin administered</label><label class="chk"><input type="checkbox" id="xmit"> 12-lead transmitted to receiving facility</label></div>
+    <div class="sp" data-sp="arrest" hidden><label class="f"><span>Arrest witnessed</span><select id="arrWit"><option value="">Select</option><option>witnessed by bystander</option><option>witnessed by EMS</option><option>unwitnessed</option></select></label><label class="f"><span>Bystander CPR</span><select id="bcpr"><option value="">Select</option><option>performed</option><option>not performed</option></select></label><label class="f"><span>Initial rhythm</span><select id="rhy"><option value="">Select</option><option>ventricular fibrillation or pulseless ventricular tachycardia</option><option>pulseless electrical activity</option><option>asystole</option></select></label><label class="f"><span>Shocks delivered</span><input type="text" id="shk" placeholder="number"></label><label class="f"><span>Return of spontaneous circulation</span><select id="rosc"><option value="">Select</option><option>yes</option><option>no</option></select></label><label class="f"><span>ROSC time</span><input type="text" id="roscT"></label></div>
+    <div class="sp" data-sp="trauma" hidden><label class="f"><span>Mechanism of injury</span><input type="text" id="mech" placeholder="fall from standing, MVC at 45 mph"></label><label class="f"><span>Loss of consciousness</span><select id="loc"><option value="">Select</option><option>yes</option><option>no</option><option>unknown</option></select></label><div class="f pick" id="pk-inj"></div></div>
+    <div class="sp" data-sp="sepsis" hidden><label class="f"><span>Sepsis screen</span><select id="sscr"><option value="">Select</option><option>positive</option><option>negative</option></select></label><label class="f"><span>Suspected source of infection</span><input type="text" id="src" placeholder="urinary, pulmonary, wound"></label><div class="f pick" id="pk-sps"></div></div>
+  </fieldset>
   <fieldset data-t="transfer 911" data-o="transport"><legend>Transport</legend>
     <div class="row">
       <label class="f"><span>Transferred from / to</span><input type="text" id="xfer" placeholder="bed to stretcher"></label>
@@ -172,16 +181,18 @@ textarea{min-height:64px;resize:vertical}
 
 <section class="outcol">
   <div class="outcard">
-    <div class="outhead"><b>Narrative</b><button class="btn" id="copy">Copy</button></div>
+    <div class="outhead"><b>Narrative</b><span><button class="btn alt" id="editBtn">Edit text</button> <button class="btn" id="copy">Copy</button></span></div>
+    <div id="miss" class="miss"></div>
     <div id="out" aria-live="polite"></div>
+    <textarea id="editor" hidden style="min-height:320px"></textarea>
     <p class="hint" id="msg"></p>
   </div>
 </section>
 </main>
 <script>
-var S={t:'transfer',o:'transport'};
+var S={t:'transfer',o:'transport'};var MISS=[],MI=0,EDIT=false;
 function $(i){return document.getElementById(i)}
-function v(id,label){var x=$(id).value.trim();return x?x:'{{'+(label||id)+'}}'}
+function v(id,label){var x=$(id).value.trim();return x?x:'{{'+(label||id)+'|'+id+'}}'}
 function P(s){s=s.trim();return /[.!?]$/.test(s)?s:s+'.'}
 function narrative(){
   var u=v('unit','Unit Number'),d=v('disp','dispatched location'),dr=v('drop','drop off location'),r=v('reason','transport reason'),L=[];
@@ -202,7 +213,7 @@ function narrative(){
   var al=PK.alg.s;ln.push('Patient has a history of '+pv('hx','history')+'. '+((al.length===1&&al[0]==='NKDA')?'Patient has no known drug allergies.':'Patient is allergic to '+pv('alg','allergies')+'.')+' Patient takes '+pv('meds','medications')+'.'+codeIso());
   if(S.t==='transfer')ln.push('PTA vitals were obtained. '+P(vv('pta')));
   ln.push('BLS assessment was obtained. '+P(pv('bls','initial assessment')));
-  var ad=addl();if(ad)ln.push(ad);var dv=devline();if(dv)ln.push(dv);var tx=txline();if(tx)ln.push(tx);var im=impline();if(im)ln.push(im);
+  var ad=addl();if(ad)ln.push(ad);var dv=devline();if(dv)ln.push(dv);var tx=txline();if(tx)ln.push(tx);var im=impline();if(im)ln.push(im);var sp=specline();if(sp)ln.push(sp);
   if(S.o==='refusal'){
     ln.push('Vitals were obtained. '+P(vv('rvit')));
     extraSets('more-ref').forEach(function(t){ln.push(t)});
@@ -238,7 +249,8 @@ function narrative(){
   return L.concat(ln).concat(tail());
 }
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function plain(){return narrative().join('\n\n').replace(/\{\{(.*?)\}\}/g,'($1)')}
+function phRe(){return /\{\{([^|}]*)(?:\|([^}]*))?\}\}/g}
+function plain(){return narrative().join('\n\n').replace(phRe(),'($1)')}
 function render(){
   var q;
   document.querySelectorAll('[data-t]').forEach(function(e){
@@ -250,17 +262,22 @@ function render(){
   $('nurseWrap').hidden=S.t==='cancel'||(S.t==='911'&&!$('snf').checked);
   $('rptO').hidden=$('rpt').value!=='Other';
   $('tmethO').hidden=$('tmeth').value!=='Other';
+  document.querySelectorAll('.sp').forEach(function(e){e.hidden=e.dataset.sp!==$('spec').value});
   $('imp1O').hidden=$('imp1').value!=='Other';$('imp2O').hidden=$('imp2').value!=='Other';
   $('cbyO').hidden=$('cby').value!=='Other';
   $('mcWrap').hidden=!$('mc').checked||S.t==='cancel'||S.o!=='refusal';
-  $('out').innerHTML=narrative().map(function(p){return '<p>'+esc(p).replace(/\{\{(.*?)\}\}/g,'<span class="ph">($1)</span>')+'</p>'}).join('');
+  if(EDIT)return;
+  var N=narrative();
+  $('out').innerHTML=N.map(function(p){return '<p>'+esc(p).replace(phRe(),'<span class="ph">($1)</span>')+'</p>'}).join('');
+  var ids=[],m,re=phRe(),all=N.join(' ');while((m=re.exec(all)))ids.push(m[2]||'');MISS=ids;
+  $('miss').innerHTML=ids.length?'<b>'+ids.length+' item'+(ids.length>1?'s':'')+' missing</b> <button type="button" class="btn alt sm" id="nextMiss">Next</button>':'<b>No items missing</b>';
 }
 document.querySelectorAll('#typeSeg button').forEach(function(b){b.onclick=function(){S.t=b.dataset.k;document.querySelectorAll('#typeSeg button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});render()}});
 document.querySelectorAll('#outSeg button').forEach(function(b){b.onclick=function(){S.o=b.dataset.o;document.querySelectorAll('#outSeg button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});render()}});
 $('form').addEventListener('input',render);$('form').addEventListener('change',render);
 $('reset').onclick=function(){document.querySelectorAll('input[type=text],input[type=number],textarea').forEach(function(e){e.value=e.id==='risks'?'worsening of condition, permanent injury, or death':''});$('sex').value='';['snf','mc'].forEach(function(i){$(i).checked=false});$('cap').checked=true;render()};
 $('copy').onclick=function(){
-  var t=plain(),m=$('msg');
+  var t=EDIT?$('editor').value:plain(),m=$('msg');
   function ok(){m.textContent='Copied.'}
   function fb(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){m.textContent='Copy failed. Select the text and copy it manually.'}a.remove()}
   try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}
@@ -277,9 +294,12 @@ PK.tx={t:'Treatment provided',s:[],sep:'; ',o:['Oxygen applied','IV access estab
 PK.dev={t:'Lines and devices',s:[],sep:'; ',o:['IV in place','IV pump infusing','PICC line','Foley catheter','Tracheostomy','Feeding tube','Ostomy','Surgical drain','Wound vac','Dialysis access','Oxygen concentrator']};
 PK.eq={t:'Equipment used',s:[],sep:'; ',o:['Stair chair','Bariatric cot','Slide sheet','Lift assist device','Power cot','Seat belt and restraints applied']};
 PK.sig={t:'Signatures obtained from',s:[],o:['Patient','Nurse','Facility representative','Receiving facility staff','Authorized representative']};
+PK.stk={t:'Stroke findings',s:[],sep:'; ',o:['Balance loss','Vision changes','Facial droop','Arm weakness','Leg weakness','Speech difficulty','Aphasia','Sudden severe headache']};
+PK.inj={t:'Injuries noted',s:[],sep:'; ',o:['Head laceration','Neck pain','Chest wall tenderness','Abdominal tenderness','Pelvic instability','Extremity deformity','Open fracture','Burn','Bleeding controlled']};
+PK.sps={t:'Signs noted',s:[],sep:'; ',o:['Fever','Chills','Tachycardia','Tachypnea','Hypotension','Altered mental status','Warm flushed skin','Mottled skin']};
 PK.bls={t:'BLS (initial) assessment',o:ASSESS,s:[],sep:'; '};
 PK.sec={t:'Secondary assessment findings',o:ASSESS,s:[],sep:'; '};
-function pv(k,l){var p=PK[k],s=p.s;return s.length?(p.sep?s.join(p.sep):jn(s)):'{{'+l+'}}'}
+function pv(k,l){var p=PK[k],s=p.s;return s.length?(p.sep?s.join(p.sep):jn(s)):'{{'+l+'|pk-'+k+'}}'}
 var SV={unit:[],disp:[],drop:[],reason:[],att:[],drv:[]},SVK='epcr-saved-v1';
 try{var raw=localStorage.getItem(SVK);if(raw){var so=JSON.parse(raw);for(var sk in SV)if(Array.isArray(so[sk]))SV[sk]=so[sk]}}catch(e){}
 function svStore(){try{localStorage.setItem(SVK,JSON.stringify(SV))}catch(e){}}
@@ -331,15 +351,22 @@ T.forEach(function(x){var q=$(x[0]).value;if(q)t.push(x[1]+' '+q.replace(':','')
 var m=$('miles').value.trim();
 if(t.length||m)o.push((t.length?'Incident times: '+t.join(', ')+'.':'')+(m?(t.length?' ':'')+'Loaded mileage: '+m+' miles.':''));
 return o}
-function rptv(){var m=$('rpt').value;if(m==='Other')m=$('rptO').value.trim();return m||'{{method of delivery}}'}
+function specline(){var t=$('spec').value,o=[],g=function(i){return $(i).value.trim()};
+if(t==='stroke'){if(g('stscale'))o.push('Stroke scale used was '+g('stscale')+'.');if(PK.stk.s.length)o.push('Stroke findings: '+PK.stk.s.join('; ')+'.')}
+else if(t==='stemi'){o.push('12-lead ECG was obtained'+(g('stl')?' showing ST elevation in '+g('stl'):'')+'.');if(g('stOn'))o.push('Symptom onset was '+g('stOn')+'.');if($('asa').checked)o.push('Aspirin was administered.');if($('xmit').checked)o.push('12-lead was transmitted to the receiving facility.')}
+else if(t==='arrest'){if(g('arrWit'))o.push('Arrest was '+g('arrWit')+'.');if(g('bcpr'))o.push('Bystander CPR was '+g('bcpr')+'.');if(g('rhy'))o.push('Initial rhythm was '+g('rhy')+'.');if(g('shk'))o.push('Shocks delivered: '+g('shk')+'.');if(g('rosc')==='yes')o.push('Return of spontaneous circulation was achieved'+(g('roscT')?' at '+g('roscT'):'')+'.');else if(g('rosc')==='no')o.push('Return of spontaneous circulation was not achieved.')}
+else if(t==='trauma'){if(g('mech'))o.push('Mechanism of injury: '+g('mech')+'.');if(g('loc'))o.push('Loss of consciousness: '+g('loc')+'.');if(PK.inj.s.length)o.push('Injuries noted: '+PK.inj.s.join('; ')+'.')}
+else if(t==='sepsis'){if(g('sscr'))o.push('Sepsis screen was '+g('sscr')+'.');if(g('src'))o.push('Suspected source of infection: '+g('src')+'.');if(PK.sps.s.length)o.push('Signs noted: '+PK.sps.s.join('; ')+'.')}
+return o.join(' ')}
+function rptv(){var m=$('rpt').value;if(m==='Other')m=$('rptO').value.trim();return m||'{{method of delivery|rpt}}'}
 function o2Found(){var sets=S.o==='refusal'?['rvit']:['base'];if(S.t==='transfer')sets.unshift('pta');
-for(var i=0;i<sets.length;i++){var t=sets[i];if($('vt-'+t+'-ox').checked){var l=$('vt-'+t+'-lpm').value.trim(),m=$('vt-'+t+'-mth').value;if(m==='Other')m=$('vt-'+t+'-oth').value.trim();return ' Patient was found on '+(l||'{{liters per minute}}')+' liters per minute via '+(m||'{{delivery method}}')+'.'}}return ''}
+for(var i=0;i<sets.length;i++){var t=sets[i];if($('vt-'+t+'-ox').checked){var l=$('vt-'+t+'-lpm').value.trim(),m=$('vt-'+t+'-mth').value;if(m==='Other')m=$('vt-'+t+'-oth').value.trim();return ' Patient was found on '+(l||'{{liters per minute|vt-'+t+'-lpm}}')+' liters per minute via '+(m||'{{delivery method|vt-'+t+'-mth}}')+'.'}}return ''}
 function vv(set){var a=[],ra=$('vt-'+set+'-ra').checked,ox=$('vt-'+set+'-ox').checked,o2='';
 if(ra)o2='room air';else if(ox){var l=$('vt-'+set+'-lpm').value.trim(),m=$('vt-'+set+'-mth').value;if(m==='Other')m=$('vt-'+set+'-oth').value.trim();o2=(l?l+' LPM':'')+(l&&m?' via ':'')+m;if(!o2)o2='supplemental oxygen'}
 VF.forEach(function(f){var x=$('vt-'+set+'-'+f[0]).value.trim();
 if(f[0]==='spo2'){if(x&&/^[\d.]+$/.test(x))x+='%';if(x)a.push('SpO2 '+x+(o2?' on '+o2:''));else if(o2)a.push('on '+o2);return}
 if(!x)return;if(f[4]&&/^[\d.]+$/.test(x))x+=f[4];a.push(f[2]+' '+x)});
-return a.length?a.join(', '):'{{vitals}}'}
+return a.length?a.join(', '):'{{vitals|vt-'+set+'-bp}}'}
 function pk(k){var p=PK[k],d=$('pk-'+k).querySelector('details');p.open=d?d.open:false;
 var h='<span>'+p.t+'</span><details'+(p.open?' open':'')+'><summary>Select from list or add your own</summary><div class="chips">';
 p.o.forEach(function(o,i){h+='<button type="button" class="chip" data-pk="'+k+'" data-i="'+i+'" aria-pressed="'+(p.s.indexOf(o)>-1)+'">'+esc(o)+'</button>'});
@@ -354,7 +381,10 @@ else if(b.dataset.rm){p.s.splice(+b.dataset.i,1)}
 else{var inp=$('add-'+k),x=inp.value.trim();if(x&&p.s.indexOf(x)<0)p.s.push(x);inp.value='';pk(k);$('add-'+k).focus();render();return}
 pk(k);render()});
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.id&&e.target.id.indexOf('add-')===0){e.preventDefault();e.target.parentNode.querySelector('button').click()}});
-var oldReset=$('reset').onclick;$('reset').onclick=function(){for(var k in PK)PK[k].s=[];oldReset();['imp1','imp2','dreas','dalert','sigR','attC','drvC','rmode','tresp','rsp','tmeth','rpt','mntB','mntC','strk','code','iso','cby','cpc','tmode','carr'].forEach(function(i){$(i).value=''});$('ama').checked=false;['tDisp','tEnr','tScn','tPtc','tDep','tArr','tTrf','tSvc'].forEach(function(i){$(i).value=''});o2Reset();pkAll()};
+var oldReset=$('reset').onclick;$('reset').onclick=function(){for(var k in PK)PK[k].s=[];oldReset();['spec','stscale','arrWit','bcpr','rhy','rosc','loc','sscr','imp1','imp2','dreas','dalert','sigR','attC','drvC','rmode','tresp','rsp','tmeth','rpt','mntB','mntC','strk','code','iso','cby','cpc','tmode','carr'].forEach(function(i){$(i).value=''});$('ama').checked=false;$('asa').checked=false;$('xmit').checked=false;['tDisp','tEnr','tScn','tPtc','tDep','tArr','tTrf','tSvc'].forEach(function(i){$(i).value=''});o2Reset();pkAll()};
+$('editBtn').onclick=function(){if(!EDIT){EDIT=true;$('editor').value=plain();$('editor').hidden=false;$('out').hidden=true;$('miss').hidden=true;this.textContent='Regenerate';$('msg').textContent='Editing: form changes will not update this text. Tap Regenerate to rebuild it from the form (this replaces your edits).'}else{EDIT=false;$('editor').hidden=true;$('out').hidden=false;$('miss').hidden=false;this.textContent='Edit text';$('msg').textContent='';render()}};
+function jump(){if(!MISS.length)return;var id=MISS[MI%MISS.length];MI++;var e=id?$(id):null;if(!e)return;var d=e.querySelector('details');if(d)d.open=true;e.scrollIntoView({behavior:'smooth',block:'center'});if(e.matches('input,select,textarea'))e.focus({preventScroll:true})}
+document.addEventListener('click',function(e){if(e.target.id==='nextMiss')jump()});
 svInit();vitAll();pkAll();
 render();
 </script>

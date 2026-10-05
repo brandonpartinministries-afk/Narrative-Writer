@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ePCR Narrative Writer</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef2f1;--card:#fff;--ink:#17262e;--mute:#586a73;--line:#cfdad8;--acc:#0b6e8a;--acc-ink:#fff;--ph:#fff0c2;--phink:#7a4b00;--out:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10181c;--card:#18242a;--ink:#e6eef0;--mute:#9db0b8;--line:#2c3d45;--acc:#4fb4d2;--acc-ink:#05222c;--ph:#4a3a10;--phink:#ffd98a;--out:#141f24}}
+:root[data-theme="dark"]{--bg:#10181c;--card:#18242a;--ink:#e6eef0;--mute:#9db0b8;--line:#2c3d45;--acc:#4fb4d2;--acc-ink:#05222c;--ph:#4a3a10;--phink:#ffd98a;--out:#141f24}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Atkinson Hyperlegible",system-ui,sans-serif}
+header{padding:16px 16px 4px;max-width:1100px;margin:auto}
+h1{font-size:1.4rem;margin:0}
+.sub{color:var(--mute);margin:2px 0 0;font-size:.9rem}
+main{max-width:1100px;margin:auto;padding:12px 16px 32px;display:grid;gap:16px}
+@media(min-width:900px){main{grid-template-columns:1fr 1fr;align-items:start}.outcol{position:sticky;top:12px}}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.seg button{flex:1;min-width:90px;padding:10px 12px;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;font:inherit;font-weight:700;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+fieldset{border:1px solid var(--line);background:var(--card);border-radius:10px;margin:0 0 12px;padding:10px 14px 14px;min-width:0}
+legend{font-weight:700;padding:0 6px}
+.f{display:block;margin-top:10px}
+.f span{display:block;font-size:.85rem;color:var(--mute);margin-bottom:2px}
+input[type=text],input[type=number],select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px}
+textarea{min-height:64px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chk{display:flex;gap:10px;align-items:center;margin-top:12px;font-weight:700}
+.chk input{width:22px;height:22px;accent-color:var(--acc)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.outcard{background:var(--out);border:1px solid var(--line);border-radius:10px;padding:14px}
+.outhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.outhead b{font-size:1.05rem}
+.btn{padding:9px 14px;border-radius:8px;border:2px solid var(--acc);background:var(--acc);color:var(--acc-ink);font:inherit;font-weight:700;cursor:pointer}
+.btn.alt{background:transparent;color:var(--acc)}
+#out p{margin:0 0 .8em}
+.ph{background:var(--ph);color:var(--phink);border-radius:4px;padding:0 3px}
+.hint{color:var(--mute);font-size:.85rem;margin:6px 0 0}
+[hidden]{display:none!important}
+</style></head>
+<body>
+<header><h1>ePCR Narrative Writer</h1><p class="sub">Fill in the fields. The narrative updates as you type; yellow items are still missing.</p></header>
+<main>
+<section id="form">
+  <div class="seg" id="typeSeg" role="group" aria-label="Call type">
+    <button data-k="transfer" aria-pressed="true">Transfer</button>
+    <button data-k="911" aria-pressed="false">911</button>
+    <button data-k="cancel" aria-pressed="false">Cancellation</button>
+  </div>
+  <div class="seg" id="outSeg" role="group" aria-label="Outcome">
+    <button data-o="transport" aria-pressed="true">Patient transported</button>
+    <button data-o="refusal" aria-pressed="false">Patient refusal</button>
+  </div>
+
+  <fieldset><legend>Dispatch</legend>
+    <label class="f"><span>Unit number</span><input type="text" id="unit"></label>
+    <label class="f"><span>Dispatched location</span><input type="text" id="disp"></label>
+    <label class="f" data-t="transfer cancel"><span>Drop-off location</span><input type="text" id="drop"></label>
+    <label class="f"><span>Transport reason</span><input type="text" id="reason"></label>
+  </fieldset>
+
+  <fieldset data-t="cancel"><legend>Cancellation</legend>
+    <label class="f"><span>When was the call cancelled?</span>
+      <select id="when"><option value="enroute">Enroute</option><option value="prior to arrival">Prior to arrival</option><option value="onscene">Onscene</option></select></label>
+    <label class="f"><span>Reason for cancellation</span><input type="text" id="cwhy"></label>
+  </fieldset>
+
+  <fieldset data-t="transfer 911"><legend>Patient and scene</legend>
+    <div class="row">
+      <label class="f"><span>Age</span><input type="number" id="age" inputmode="numeric"></label>
+      <label class="f"><span>Sex</span><select id="sex"><option value="">Select</option><option>male</option><option>female</option></select></label>
+    </div>
+    <div class="row">
+      <label class="f"><span>Position</span><input type="text" id="pos" placeholder="sitting, supine"></label>
+      <label class="f"><span>On (floor, chair, bed)</span><input type="text" id="surf"></label>
+    </div>
+    <label class="f"><span>Chief complaint</span><input type="text" id="cc"></label>
+    <label class="chk" data-t="911"><input type="checkbox" id="snf"> Scene is a nursing facility</label>
+    <label class="f" id="nurseWrap"><span>Nurse stated (reason for transport / ED visit)</span><input type="text" id="nreason"></label>
+    <label class="f"><span>History</span><textarea id="hx"></textarea></label>
+    <label class="f"><span>Allergies</span><input type="text" id="alg"></label>
+    <label class="f"><span>Medications</span><textarea id="meds"></textarea></label>
+    <label class="f" data-t="transfer"><span>PTA vitals</span><input type="text" id="pta" placeholder="BP, HR, RR, SpO2, temp, BGL"></label>
+    <label class="f"><span>BLS (initial) assessment</span><textarea id="bls"></textarea></label>
+  </fieldset>
+
+  <fieldset data-t="transfer 911" data-o="transport"><legend>Transport</legend>
+    <div class="row">
+      <label class="f"><span>Transferred from / to</span><input type="text" id="xfer" placeholder="bed to stretcher"></label>
+      <label class="f"><span>Method of transfer</span><input type="text" id="xmeth" placeholder="slide sheet, 3-person lift"></label>
+    </div>
+    <label class="f"><span>Baseline vitals</span><input type="text" id="base"></label>
+    <label class="f"><span>Vitals reassessed in ambulance</span><input type="text" id="amb"></label>
+    <label class="chk"><input type="checkbox" id="cont"> Continuous hemodynamic monitoring</label>
+    <label class="f"><span>Secondary assessment findings</span><textarea id="sec"></textarea></label>
+    <div class="row">
+      <label class="f"><span>At drop-off, from (bed, stretcher)</span><input type="text" id="afrom"></label>
+      <label class="f"><span>Onto (bed, chair)</span><input type="text" id="ato"></label>
+    </div>
+    <label class="f"><span>Method of transfer at drop-off</span><input type="text" id="ameth"></label>
+    <label class="f" data-t="transfer"><span>Report given to (nurse name)</span><input type="text" id="rn"></label>
+    <label class="f" data-t="transfer"><span>Medical necessity for ambulance transport</span><textarea id="necc"></textarea></label>
+  </fieldset>
+
+  <fieldset data-t="transfer 911" data-o="refusal"><legend>Patient refusal</legend>
+    <label class="f"><span>Vitals obtained</span><input type="text" id="rvit"></label>
+    <label class="f"><span>Patient refused</span>
+      <select id="rwhat"><option>transport</option><option>treatment</option><option>treatment and transport</option></select></label>
+    <label class="f"><span>Patient's stated reason</span><input type="text" id="rwhy"></label>
+    <label class="f"><span>Risks explained</span><input type="text" id="risks" value="worsening of condition, permanent injury, or death"></label>
+    <label class="chk"><input type="checkbox" id="cap" checked> Alert and oriented with decision-making capacity</label>
+    <label class="chk"><input type="checkbox" id="mc"> Medical control contacted</label>
+    <label class="f" id="mcWrap" hidden><span>Medical control name / physician</span><input type="text" id="mcn"></label>
+    <label class="f"><span>Patient left</span><input type="text" id="left" placeholder="in care of family, with facility staff, at home, alone"></label>
+    <label class="f"><span>Advised to call 911 / seek care if (optional)</span><input type="text" id="adv"></label>
+  </fieldset>
+  <button class="btn alt" id="reset">Clear all fields</button>
+</section>
+
+<section class="outcol">
+  <div class="outcard">
+    <div class="outhead"><b>Narrative</b><button class="btn" id="copy">Copy</button></div>
+    <div id="out" aria-live="polite"></div>
+    <p class="hint" id="msg"></p>
+  </div>
+</section>
+</main>
+<script>
+var S={t:'transfer',o:'transport'};
+function $(i){return document.getElementById(i)}
+function v(id,label){var x=$(id).value.trim();return x?x:'{{'+(label||id)+'}}'}
+function P(s){s=s.trim();return /[.!?]$/.test(s)?s:s+'.'}
+function narrative(){
+  var u=v('unit','Unit Number'),d=v('disp','dispatched location'),dr=v('drop','drop off location'),r=v('reason','transport reason'),L=[];
+  var head=S.t==='911'?u+' was dispatched to '+d+' for '+r+'.':u+' was dispatched to '+d+' to transport to '+dr+' for '+r+'.';
+  L.push(head);
+  if(S.t==='cancel'){
+    L.push(u+' was cancelled '+$('when').value+'. '+P(v('cwhy','reason for cancellation')));
+    return L;
+  }
+  var ln=[];
+  ln.push('Upon arrival at '+d+', '+u+' arrived onscene to find '+v('age','age')+' year old '+v('sex','sex')+' '+v('pos','position')+' on '+v('surf','floor, chair, bed')+'.');
+  var cc='Patient complained of '+v('cc','chief complaint')+'.';
+  if(S.t==='transfer'||$('snf').checked)cc+=' Nurse stated '+P(v('nreason','reason for transport'));
+  ln.push(cc);
+  ln.push('Patient '+v('hx','history')+', '+v('alg','allergies')+', and '+v('meds','medications')+'.');
+  if(S.t==='transfer')ln.push('PTA vitals were obtained. '+P(v('pta','vitals')));
+  ln.push('BLS assessment was obtained. '+P(v('bls','initial assessment')));
+  if(S.o==='refusal'){
+    ln.push('Vitals were obtained. '+P(v('rvit','vitals')));
+    var t='';
+    if($('cap').checked)t+='Patient was alert and oriented and demonstrated decision-making capacity. ';
+    t+='Patient refused '+$('rwhat').value+'. '+P(v('rwhy','reason for refusal'));
+    ln.push(t);
+    var rk='Risks of refusal, including '+v('risks','risks')+', were explained to the patient, who verbalized understanding.';
+    if($('mc').checked)rk+=' Medical control ('+v('mcn','name')+') was contacted.';
+    ln.push(rk);
+    var lf='Patient was left '+v('left','where / with whom')+'.';
+    var a=$('adv').value.trim();
+    if(a)lf+=' Patient was advised to call 911 or seek care if '+P(a);
+    ln.push(lf);
+    ln.push('Refusal paperwork was completed. All signatures were obtained.');
+    return L.concat(ln);
+  }
+  ln.push('Patient was transferred '+v('xfer','from / to')+' via '+v('xmeth','method of transfer')+'.');
+  ln.push('Patient was strapped x 5, Rails x 2.');
+  ln.push('Baseline vitals were '+P(v('base','vitals')));
+  ln.push('Patient was transferred into ambulance where vitals were reassessed. '+P(v('amb','vitals')));
+  ln.push('Patient was transported to '+dr+'.');
+  ln.push($('cont').checked?'Patient was placed on continuous hemodynamic monitoring throughout transport, and vitals were reassessed every half hour.':'Patient vitals were reassessed every half hour throughout transport.');
+  ln.push('Secondary assessment was obtained. '+P(v('sec','assessment findings')));
+  ln.push('Upon arrival at '+dr+', patient was transferred from '+v('afrom','bed, stretcher')+' onto '+v('ato','bed, chair')+' via '+v('ameth','method of transfer')+'.');
+  if(S.t==='transfer')ln.push('Patient care, paperwork, and verbal report was transferred to '+v('rn','name of nurse')+'.');
+  ln.push('All signatures were obtained.');
+  if(S.t==='transfer')ln.push('Patient requires transportation by ambulance due to '+P(v('necc','medical necessity')));
+  return L.concat(ln);
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function plain(){return narrative().join('\n\n').replace(/\{\{(.*?)\}\}/g,'($1)')}
+function render(){
+  var q;
+  document.querySelectorAll('[data-t]').forEach(function(e){
+    var ok=e.dataset.t.split(' ').indexOf(S.t)>-1;
+    if(ok&&e.dataset.o)ok=e.dataset.o===S.o;
+    e.hidden=!ok;
+  });
+  $('outSeg').hidden=S.t==='cancel';
+  $('nurseWrap').hidden=S.t==='cancel'||(S.t==='911'&&!$('snf').checked);
+  $('mcWrap').hidden=!$('mc').checked||S.t==='cancel'||S.o!=='refusal';
+  $('out').innerHTML=narrative().map(function(p){return '<p>'+esc(p).replace(/\{\{(.*?)\}\}/g,'<span class="ph">($1)</span>')+'</p>'}).join('');
+}
+document.querySelectorAll('#typeSeg button').forEach(function(b){b.onclick=function(){S.t=b.dataset.k;document.querySelectorAll('#typeSeg button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});render()}});
+document.querySelectorAll('#outSeg button').forEach(function(b){b.onclick=function(){S.o=b.dataset.o;document.querySelectorAll('#outSeg button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});render()}});
+$('form').addEventListener('input',render);$('form').addEventListener('change',render);
+$('reset').onclick=function(){document.querySelectorAll('input[type=text],input[type=number],textarea').forEach(function(e){e.value=e.id==='risks'?'worsening of condition, permanent injury, or death':''});$('sex').value='';['snf','cont','mc'].forEach(function(i){$(i).checked=false});$('cap').checked=true;render()};
+$('copy').onclick=function(){
+  var t=plain(),m=$('msg');
+  function ok(){m.textContent='Copied.'}
+  function fb(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){m.textContent='Copy failed. Select the text and copy it manually.'}a.remove()}
+  try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}
+};
+render();
+</script>
+</body></html>

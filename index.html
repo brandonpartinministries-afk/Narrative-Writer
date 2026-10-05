@@ -234,7 +234,7 @@ if((k=b.dataset.svsave)){var x=$(k).value.trim();if(x&&SV[k].indexOf(x)<0){SV[k]
 else if((k=b.dataset.svfill)){$(k).value=SV[k][+b.dataset.i];render()}
 else if((k=b.dataset.svdel)){SV[k].splice(+b.dataset.i,1);svStore();svDraw(k)}});
 var VF=[['bp','BP','BP','120/80',''],['hr','HR','HR','bpm',''],['rr','RR','RR','/min',''],['spo2','SpO2','SpO2','%','%'],['temp','Temp','temp','\u00b0F','\u00b0F'],['bgl','Glucose','BGL','mg/dL',' mg/dL'],['ht','Height','height','ft/in',''],['wt','Weight','weight','lbs',' lbs']];
-function vitAll(){['pta','base','amb','rvit'].forEach(function(set){var h='';VF.forEach(function(f){h+='<label><span>'+f[1]+'</span><input type="text" inputmode="decimal" id="vt-'+set+'-'+f[0]+'" placeholder="'+f[3]+'"></label>'});$('vt-'+set).innerHTML=h})}
+function vitAll(){['pta','base','amb','rvit'].forEach(function(set){var h='';VF.forEach(function(f){h+='<label><span>'+f[1]+'</span><input type="text" inputmode="'+(f[0]==='bp'||f[0]==='ht'?'text':'decimal')+'" id="vt-'+set+'-'+f[0]+'" placeholder="'+f[3]+'"></label>'});$('vt-'+set).innerHTML=h})}
 function vv(set){var a=[];VF.forEach(function(f){var x=$('vt-'+set+'-'+f[0]).value.trim();if(!x)return;if(f[4]&&/^[\d.]+$/.test(x))x+=f[4];a.push(f[2]+' '+x)});return a.length?a.join(', '):'{{vitals}}'}
 function pk(k){var p=PK[k],d=$('pk-'+k).querySelector('details');p.open=d?d.open:false;
 var h='<span>'+p.t+'</span><details'+(p.open?' open':'')+'><summary>Select from list or add your own</summary><div class="chips">';

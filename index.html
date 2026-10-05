@@ -47,6 +47,7 @@ textarea{min-height:64px;resize:vertical}
 .chip.pair{display:inline-flex;padding:0;overflow:hidden}.pair button{font:inherit;background:none;border:0;color:inherit;padding:6px 10px;cursor:pointer}.pair .x{padding:6px 9px;border-left:1px solid var(--line)}
 .btn.sm{padding:5px 10px;font-size:.85rem}.sv{align-items:center}
 .o2{grid-column:1/-1}.o2 .chk{margin-top:6px}.o2 .row{margin-top:8px}
+.xrow{display:flex;gap:6px;margin-top:8px}.xrow input{flex:1;min-width:0}
 .hint{color:var(--mute);font-size:.85rem;margin:6px 0 0}
 [hidden]{display:none!important}
 </style></head>
@@ -67,7 +68,7 @@ textarea{min-height:64px;resize:vertical}
   <fieldset><legend>Dispatch</legend>
     <label class="f"><span>Unit number</span><input type="text" id="unit"></label>
     <label class="f"><span>Dispatched location</span><input type="text" id="disp"></label>
-    <label class="f" data-t="transfer cancel"><span>Drop-off location</span><input type="text" id="drop"></label>
+    <label class="f" data-t="transfer 911 cancel"><span>Drop-off location</span><input type="text" id="drop"></label>
     <label class="f"><span>Transport reason</span><input type="text" id="reason"></label>
   </fieldset>
 
@@ -75,6 +76,8 @@ textarea{min-height:64px;resize:vertical}
     <label class="f"><span>When was the call cancelled?</span>
       <select id="when"><option value="enroute">Enroute</option><option value="prior to arrival">Prior to arrival</option><option value="onscene">Onscene</option></select></label>
     <label class="f"><span>Reason for cancellation</span><input type="text" id="cwhy"></label>
+    <label class="f"><span>Cancelled by</span><select id="cby"><option value="">Select</option><option>dispatch</option><option>facility staff</option><option>the nurse</option><option>the patient</option><option>family</option><option>another unit</option><option value="Other">Other (type your own)</option></select></label><input type="text" id="cbyO" placeholder="Other: cancelled by" hidden style="margin-top:8px">
+    <label class="f"><span>Patient contact</span><select id="cpc"><option value="">Select</option><option>No patient contact was made</option><option>Patient contact was made</option></select></label>
   </fieldset>
 
   <fieldset data-t="transfer 911"><legend>Patient and scene</legend>
@@ -97,6 +100,18 @@ textarea{min-height:64px;resize:vertical}
     <div class="f pick" id="pk-bls"></div>
   </fieldset>
 
+  <fieldset data-t="transfer 911"><legend>Additional assessment</legend>
+    <div class="row"><label class="f"><span>Baseline mental status</span><select id="mntB"><option value="">Select</option><option>alert and oriented x4</option><option>alert and oriented x3</option><option>alert and oriented x2</option><option>alert and oriented x1</option><option>confused</option><option>lethargic</option><option>unresponsive</option><option>nonverbal</option><option>combative</option></select></label><label class="f"><span>Current mental status</span><select id="mntC"><option value="">Select</option><option>alert and oriented x4</option><option>alert and oriented x3</option><option>alert and oriented x2</option><option>alert and oriented x1</option><option>confused</option><option>lethargic</option><option>unresponsive</option><option>nonverbal</option><option>combative</option></select></label></div>
+    <div class="row"><label class="f"><span>GCS</span><input type="text" inputmode="numeric" id="gcs" placeholder="3-15"></label><label class="f"><span>Stroke screen</span><select id="strk"><option value="">Select</option><option>negative</option><option>positive</option><option>not indicated</option></select></label></div>
+    <div class="row"><label class="f"><span>Pain (0-10)</span><input type="text" inputmode="numeric" id="pnS"></label><label class="f"><span>Pain location</span><input type="text" id="pnL"></label></div>
+    <label class="f"><span>Pain description</span><input type="text" id="pnQ" placeholder="sharp, dull, pressure"></label>
+    <div class="f pick" id="pk-mob"></div>
+    <div class="row"><label class="f"><span>Code status</span><select id="code"><option value="">Select</option><option>full code</option><option>DNR</option><option>DNR/DNI</option><option>POLST/MOLST on file</option><option>unknown</option></select></label><label class="f"><span>Isolation precautions</span><select id="iso"><option value="">Select</option><option>contact</option><option>droplet</option><option>airborne</option><option>contact and droplet</option></select></label></div>
+  </fieldset>
+  <fieldset data-t="transfer 911"><legend>Treatment</legend>
+    <div class="f pick" id="pk-tx"></div>
+    <label class="f"><span>Patient response to treatment</span><input type="text" id="txr"></label>
+  </fieldset>
   <fieldset data-t="transfer 911" data-o="transport"><legend>Transport</legend>
     <div class="row">
       <label class="f"><span>Transferred from / to</span><input type="text" id="xfer" placeholder="bed to stretcher"></label>
@@ -104,19 +119,23 @@ textarea{min-height:64px;resize:vertical}
     </div>
     <div class="f"><span>Baseline vitals</span><div class="vit" id="vt-base"></div></div>
     <div class="f"><span>Vitals reassessed in ambulance</span><div class="vit" id="vt-amb"></div></div>
-    <label class="chk"><input type="checkbox" id="cont"> Continuous hemodynamic monitoring</label>
+    <div id="more-trans"></div><button type="button" class="btn alt sm" data-addv="trans" style="margin-top:10px">Add another set of vitals</button>
+    <label class="f"><span>Transport response</span><select id="tmode"><option value="">Select</option><option>with lights and sirens</option><option>without lights and sirens</option></select></label>
+    <div class="f" data-t="911"><label><span>Radio report given prior to arrival via</span><select id="rpt"><option value="">Select</option><option>radio</option><option>cell phone</option><option>landline phone</option><option>mobile data terminal</option><option value="Other">Other (type your own)</option></select></label><input type="text" id="rptO" placeholder="Other method" hidden style="margin-top:8px"></div>
     <div class="f pick" id="pk-sec"></div>
     <div class="row">
       <label class="f"><span>At drop-off, from (bed, stretcher)</span><input type="text" id="afrom"></label>
       <label class="f"><span>Onto (bed, chair)</span><input type="text" id="ato"></label>
     </div>
     <label class="f"><span>Method of transfer at drop-off</span><input type="text" id="ameth"></label>
+    <label class="f"><span>Condition upon arrival</span><select id="carr"><option value="">Select</option><option>stable</option><option>unchanged</option><option>improved</option><option>deteriorated</option></select></label>
     <label class="f" data-t="transfer"><span>Report given to (nurse name)</span><input type="text" id="rn"></label>
     <div class="f pick" data-t="transfer" id="pk-necc"></div>
   </fieldset>
 
   <fieldset data-t="transfer 911" data-o="refusal"><legend>Patient refusal</legend>
     <div class="f"><span>Vitals obtained</span><div class="vit" id="vt-rvit"></div></div>
+    <div id="more-ref"></div><button type="button" class="btn alt sm" data-addv="ref" style="margin-top:10px">Add another set of vitals</button>
     <label class="f"><span>Patient refused</span>
       <select id="rwhat"><option>transport</option><option>treatment</option><option>treatment and transport</option></select></label>
     <label class="f"><span>Patient's stated reason</span><input type="text" id="rwhy"></label>
@@ -125,6 +144,8 @@ textarea{min-height:64px;resize:vertical}
     <label class="chk"><input type="checkbox" id="mc"> Medical control contacted</label>
     <label class="f" id="mcWrap" hidden><span>Medical control name / physician</span><input type="text" id="mcn"></label>
     <label class="f"><span>Patient left</span><input type="text" id="left" placeholder="in care of family, with facility staff, at home, alone"></label>
+    <label class="f"><span>Witness name</span><input type="text" id="wit"></label>
+    <label class="chk"><input type="checkbox" id="ama"> Leaving against medical advice (AMA)</label>
     <label class="f"><span>Advised to call 911 / seek care if (optional)</span><input type="text" id="adv"></label>
   </fieldset>
   <button class="btn alt" id="reset">Clear all fields</button>
@@ -148,7 +169,8 @@ function narrative(){
   var head=S.t==='911'?u+' was dispatched to '+d+' for '+r+'.':u+' was dispatched to '+d+' to transport to '+dr+' for '+r+'.';
   L.push(head);
   if(S.t==='cancel'){
-    L.push(u+' was cancelled '+$('when').value+'. '+P(v('cwhy','reason for cancellation')));
+    var by=$('cby').value;if(by==='Other')by=$('cbyO').value.trim();
+    L.push(u+' was cancelled '+$('when').value+(by?' by '+by:'')+'. '+P(v('cwhy','reason for cancellation'))+($('cpc').value?' '+$('cpc').value+'.':''));
     return L;
   }
   var ln=[];
@@ -157,17 +179,20 @@ function narrative(){
   var c2=$('cc2').value.trim();if(c2)cc+=' Patient also complained of '+P(c2);
   if(S.t==='transfer'||$('snf').checked)cc+=' Nurse stated '+P(v('nreason','reason for transport'));
   ln.push(cc);
-  var al=PK.alg.s;ln.push('Patient has a history of '+pv('hx','history')+'. '+((al.length===1&&al[0]==='NKDA')?'Patient has no known drug allergies.':'Patient is allergic to '+pv('alg','allergies')+'.')+' Patient takes '+pv('meds','medications')+'.');
+  var al=PK.alg.s;ln.push('Patient has a history of '+pv('hx','history')+'. '+((al.length===1&&al[0]==='NKDA')?'Patient has no known drug allergies.':'Patient is allergic to '+pv('alg','allergies')+'.')+' Patient takes '+pv('meds','medications')+'.'+codeIso());
   if(S.t==='transfer')ln.push('PTA vitals were obtained. '+P(vv('pta')));
   ln.push('BLS assessment was obtained. '+P(pv('bls','initial assessment')));
+  var ad=addl();if(ad)ln.push(ad);var tx=txline();if(tx)ln.push(tx);
   if(S.o==='refusal'){
     ln.push('Vitals were obtained. '+P(vv('rvit')));
+    extraSets('more-ref').forEach(function(t){ln.push(t)});
     var t='';
     if($('cap').checked)t+='Patient was alert and oriented and demonstrated decision-making capacity. ';
     t+='Patient refused '+$('rwhat').value+'. '+P(v('rwhy','reason for refusal'));
     ln.push(t);
     var rk='Risks of refusal, including '+v('risks','risks')+', were explained to the patient, who verbalized understanding.';
     if($('mc').checked)rk+=' Medical control ('+v('mcn','name')+') was contacted.';
+    if($('ama').checked)rk+=' Patient is leaving against medical advice.';var wt=$('wit').value.trim();if(wt)rk+=' Refusal was witnessed by '+wt+'.';
     ln.push(rk);
     var lf='Patient was left '+v('left','where / with whom')+'.';
     var a=$('adv').value.trim();
@@ -180,10 +205,11 @@ function narrative(){
   ln.push('Patient was strapped x 5, Rails x 2.');
   ln.push('Baseline vitals were '+P(vv('base')));
   ln.push('Patient was transferred into ambulance where vitals were reassessed. '+P(vv('amb')));
-  ln.push('Patient was transported to '+dr+'.');
-  ln.push($('cont').checked?'Patient was placed on continuous hemodynamic monitoring throughout transport, and vitals were reassessed every half hour.':'Patient vitals were reassessed every half hour throughout transport.');
+  ln.push('Patient was transported to '+dr+($('tmode').value?' '+$('tmode').value:'')+'.');
+  if(S.t==='911')ln.push('Radio report was given prior to arrival via '+rptv()+'.');
+  extraSets('more-trans').forEach(function(t){ln.push(t)});
   ln.push('Secondary assessment was obtained. '+P(pv('sec','assessment findings')));
-  ln.push('Upon arrival at '+dr+', patient was transferred from '+v('afrom','bed, stretcher')+' onto '+v('ato','bed, chair')+' via '+v('ameth','method of transfer')+'.');
+  ln.push('Upon arrival at '+dr+', patient was transferred from '+v('afrom','bed, stretcher')+' onto '+v('ato','bed, chair')+' via '+v('ameth','method of transfer')+'.'+($('carr').value?' Patient condition upon arrival was '+$('carr').value+'.':''));
   if(S.t==='transfer')ln.push('Patient care, paperwork, and verbal report was transferred to '+v('rn','name of nurse')+'.');
   ln.push('All signatures were obtained.');
   if(S.t==='transfer')ln.push('Patient requires transportation by ambulance due to '+P(pv('necc','medical necessity')));
@@ -200,13 +226,15 @@ function render(){
   });
   $('outSeg').hidden=S.t==='cancel';
   $('nurseWrap').hidden=S.t==='cancel'||(S.t==='911'&&!$('snf').checked);
+  $('rptO').hidden=$('rpt').value!=='Other';
+  $('cbyO').hidden=$('cby').value!=='Other';
   $('mcWrap').hidden=!$('mc').checked||S.t==='cancel'||S.o!=='refusal';
   $('out').innerHTML=narrative().map(function(p){return '<p>'+esc(p).replace(/\{\{(.*?)\}\}/g,'<span class="ph">($1)</span>')+'</p>'}).join('');
 }
 document.querySelectorAll('#typeSeg button').forEach(function(b){b.onclick=function(){S.t=b.dataset.k;document.querySelectorAll('#typeSeg button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});render()}});
 document.querySelectorAll('#outSeg button').forEach(function(b){b.onclick=function(){S.o=b.dataset.o;document.querySelectorAll('#outSeg button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});render()}});
 $('form').addEventListener('input',render);$('form').addEventListener('change',render);
-$('reset').onclick=function(){document.querySelectorAll('input[type=text],input[type=number],textarea').forEach(function(e){e.value=e.id==='risks'?'worsening of condition, permanent injury, or death':''});$('sex').value='';['snf','cont','mc'].forEach(function(i){$(i).checked=false});$('cap').checked=true;render()};
+$('reset').onclick=function(){document.querySelectorAll('input[type=text],input[type=number],textarea').forEach(function(e){e.value=e.id==='risks'?'worsening of condition, permanent injury, or death':''});$('sex').value='';['snf','mc'].forEach(function(i){$(i).checked=false});$('cap').checked=true;render()};
 $('copy').onclick=function(){
   var t=plain(),m=$('msg');
   function ok(){m.textContent='Copied.'}
@@ -220,6 +248,8 @@ meds:{t:'Medications',o:['Lisinopril','Metoprolol','Amlodipine','Furosemide','Me
 function jn(a){return a.length<2?a.join(''):a.length==2?a.join(' and '):a.slice(0,-1).join(', ')+', and '+a[a.length-1]}
 var ASSESS=['Alert and oriented x4','Alert and oriented x3','Alert and oriented x2','Alert and oriented x1','Confused at baseline','GCS 15','Speech clear','Slurred speech','Facial droop','PERRL','Moves all extremities','Equal grip strength','Airway patent','Respirations even and unlabored','Labored respirations','Lungs clear bilaterally','Wheezing','Crackles','Diminished lung sounds','Radial pulses strong and regular','Pulses irregular','Skin warm, dry, and pink','Skin pale','Skin diaphoretic','Capillary refill less than 2 seconds','Edema to lower extremities','Abdomen soft and non-tender','Abdomen distended','Pain denied','No signs of trauma','No acute distress'];
 PK.necc={t:'Medical necessity for ambulance transport',s:[],sep:'; ',o:['Patient is bed-confined: unable to get up from bed without assistance, unable to ambulate, and unable to sit in a chair or wheelchair','Patient was bed-confined before and after the ambulance trip','Patient condition contraindicates other means of transportation','Medical condition requires ambulance transport regardless of bed confinement','Emergency situation (accident, injury, or acute illness)','Patient requires restraint to prevent injury to self or others','Patient must remain immobile due to a fracture or possible fracture','Requires advanced airway management','Morbid obesity requiring additional personnel or equipment','Requires oxygen therapy and monitoring during transport','Requires cardiac monitoring during transport','Requires IV or medication monitoring during transport','Requires skilled medical monitoring en route','Altered mental status','Hemodynamic instability','Paralysis or hemiparesis']};
+PK.mob={t:'Mobility',s:[],sep:'; ',o:['Unable to bear weight','Unable to stand','Unable to ambulate','Unable to sit upright in a wheelchair','Bed-confined','Requires assistance of two or more staff','Ambulatory with assistance','Uses wheelchair at baseline','Uses walker','Contractures','Paralysis or hemiparesis']};
+PK.tx={t:'Treatment provided',s:[],sep:'; ',o:['Oxygen applied','IV access established','Cardiac monitor applied','12-lead ECG obtained','Blood glucose checked','Bleeding controlled','Splint applied','Spinal motion restriction','Suctioned airway','Patient positioned for comfort']};
 PK.bls={t:'BLS (initial) assessment',o:ASSESS,s:[],sep:'; '};
 PK.sec={t:'Secondary assessment findings',o:ASSESS,s:[],sep:'; '};
 function pv(k,l){var p=PK[k],s=p.s;return s.length?(p.sep?s.join(p.sep):jn(s)):'{{'+l+'}}'}
@@ -235,16 +265,33 @@ if((k=b.dataset.svsave)){var x=$(k).value.trim();if(x&&SV[k].indexOf(x)<0){SV[k]
 else if((k=b.dataset.svfill)){$(k).value=SV[k][+b.dataset.i];render()}
 else if((k=b.dataset.svdel)){SV[k].splice(+b.dataset.i,1);svStore();svDraw(k)}});
 var VF=[['bp','BP','BP','120/80',''],['hr','HR','HR','bpm',''],['rr','RR','RR','/min',''],['spo2','SpO2','SpO2','%','%'],['temp','Temp','temp','\u00b0F','\u00b0F'],['bgl','Glucose','BGL','mg/dL',' mg/dL'],['ht','Height','height','ft/in',''],['wt','Weight','weight','lbs',' lbs']];
-function vitAll(){['pta','base','amb','rvit'].forEach(function(set){var h='';VF.forEach(function(f){h+='<label><span>'+f[1]+'</span><input type="text" inputmode="'+(f[0]==='bp'||f[0]==='ht'?'text':'decimal')+'" id="vt-'+set+'-'+f[0]+'" placeholder="'+f[3]+'"></label>'});h+='<div class="o2"><label class="chk"><input type="checkbox" id="vt-'+set+'-ra"> Room air</label><label class="chk"><input type="checkbox" id="vt-'+set+'-ox"> Oxygen requirement</label><div id="vt-'+set+'-oxbox" hidden><div class="row"><label><span>Liters per minute</span><input type="text" inputmode="decimal" id="vt-'+set+'-lpm" placeholder="LPM"></label><label><span>Delivery method</span><select id="vt-'+set+'-mth"><option value="">Select</option>'+OM.map(function(m){return '<option value="'+m[0]+'">'+m[1]+'</option>'}).join('')+'<option value="Other">Other (type your own)</option></select></label></div><input type="text" id="vt-'+set+'-oth" placeholder="Other delivery method" hidden style="margin-top:8px"></div></div>';
-$('vt-'+set).innerHTML=h})}
+function vitAll(){['pta','base','amb','rvit'].forEach(vitFill)}
+function vitFill(set){var h='';VF.forEach(function(f){h+='<label><span>'+f[1]+'</span><input type="text" inputmode="'+(f[0]==='bp'||f[0]==='ht'?'text':'decimal')+'" id="vt-'+set+'-'+f[0]+'" placeholder="'+f[3]+'"></label>'});h+='<div class="o2"><label class="chk"><input type="checkbox" id="vt-'+set+'-ra"> Room air</label><label class="chk"><input type="checkbox" id="vt-'+set+'-ox"> Oxygen requirement</label><div id="vt-'+set+'-oxbox" hidden><div class="row"><label><span>Liters per minute</span><input type="text" inputmode="decimal" id="vt-'+set+'-lpm" placeholder="LPM"></label><label><span>Delivery method</span><select id="vt-'+set+'-mth"><option value="">Select</option>'+OM.map(function(m){return '<option value="'+m[0]+'">'+m[1]+'</option>'}).join('')+'<option value="Other">Other (type your own)</option></select></label></div><input type="text" id="vt-'+set+'-oth" placeholder="Other delivery method" hidden style="margin-top:8px"></div></div>';
+$('vt-'+set).innerHTML=h}
 var OM=[['nasal cannula','Nasal cannula'],['high-flow nasal cannula','High-flow nasal cannula'],['simple face mask','Simple face mask'],['non-rebreather mask','Non-rebreather mask'],['Venturi mask','Venturi mask'],['CPAP','CPAP'],['BiPAP','BiPAP'],['bag-valve mask','Bag-valve mask'],['tracheostomy collar','Tracheostomy collar'],['home oxygen concentrator','Home oxygen concentrator'],['ventilator','Ventilator']];
-function o2Reset(){['pta','base','amb','rvit'].forEach(function(s){$('vt-'+s+'-ra').checked=false;$('vt-'+s+'-ox').checked=false;$('vt-'+s+'-mth').value='';$('vt-'+s+'-oxbox').hidden=true;$('vt-'+s+'-oth').hidden=true})}
+function o2Reset(){$('more-trans').innerHTML='';$('more-ref').innerHTML='';['pta','base','amb','rvit'].forEach(function(s){$('vt-'+s+'-ra').checked=false;$('vt-'+s+'-ox').checked=false;$('vt-'+s+'-mth').value='';$('vt-'+s+'-oxbox').hidden=true;$('vt-'+s+'-oth').hidden=true})}
 document.addEventListener('change',function(e){var m=(e.target.id||'').match(/^vt-(\w+)-(ra|ox|mth)$/);if(!m)return;var t=m[1];
 if(m[2]==='ra'&&e.target.checked)$('vt-'+t+'-ox').checked=false;
 if(m[2]==='ox'&&e.target.checked)$('vt-'+t+'-ra').checked=false;
 $('vt-'+t+'-oxbox').hidden=!$('vt-'+t+'-ox').checked;
 $('vt-'+t+'-oth').hidden=$('vt-'+t+'-mth').value!=='Other';
 render()});
+var XN=0;
+document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+if(b.dataset.addv){var id='x'+(++XN),w=document.createElement('div');w.className='f xset';w.dataset.set=id;
+w.innerHTML='<span>Additional vitals</span><div class="vit" id="vt-'+id+'"></div><button type="button" class="btn alt sm" data-rmv="1" style="margin-top:8px">Remove this set</button>';$('more-'+b.dataset.addv).appendChild(w);vitFill(id);render()}
+else if(b.dataset.rmv){b.closest('.xset').remove();render()}});
+function extraSets(id){var o=[];document.querySelectorAll('#'+id+' .xset').forEach(function(e){o.push('Additional vitals were obtained. '+P(vv(e.dataset.set)))});return o}
+function codeIso(){var t='',c=$('code').value,i=$('iso').value;if(c)t+=' Patient code status is '+c+'.';if(i)t+=' Patient is on '+i+' isolation precautions.';return t}
+function addl(){var o=[],a=$('mntB').value,b=$('mntC').value;
+if(a&&b)o.push('Baseline mental status was '+a+' and current mental status is '+b+'.');else if(a)o.push('Baseline mental status was '+a+'.');else if(b)o.push('Current mental status is '+b+'.');
+var g=$('gcs').value.trim();if(g)o.push('GCS was '+g+'.');
+var st=$('strk').value;if(st)o.push('Stroke screen was '+st+'.');
+var pn=$('pnS').value.trim();if(pn){if(pn==='0')o.push('Patient denied pain.');else{var pl=$('pnL').value.trim(),pq=$('pnQ').value.trim();o.push('Patient rated pain '+pn+'/10'+(pl?' located at '+pl:'')+(pq?', described as '+pq:'')+'.')}}
+if(PK.mob.s.length)o.push('Patient mobility: '+PK.mob.s.join('; ')+'.');
+return o.join(' ')}
+function txline(){var t='',r=$('txr').value.trim();if(PK.tx.s.length)t='Treatment provided included '+PK.tx.s.join('; ')+'.';if(r)t+=(t?' ':'')+'Patient response: '+P(r);return t}
+function rptv(){var m=$('rpt').value;if(m==='Other')m=$('rptO').value.trim();return m||'{{method of delivery}}'}
 function o2Found(){var sets=S.o==='refusal'?['rvit']:['base'];if(S.t==='transfer')sets.unshift('pta');
 for(var i=0;i<sets.length;i++){var t=sets[i];if($('vt-'+t+'-ox').checked){var l=$('vt-'+t+'-lpm').value.trim(),m=$('vt-'+t+'-mth').value;if(m==='Other')m=$('vt-'+t+'-oth').value.trim();return ' Patient was found on '+(l||'{{liters per minute}}')+' liters per minute via '+(m||'{{delivery method}}')+'.'}}return ''}
 function vv(set){var a=[],ra=$('vt-'+set+'-ra').checked,ox=$('vt-'+set+'-ox').checked,o2='';
@@ -267,7 +314,7 @@ else if(b.dataset.rm){p.s.splice(+b.dataset.i,1)}
 else{var inp=$('add-'+k),x=inp.value.trim();if(x&&p.s.indexOf(x)<0)p.s.push(x);inp.value='';pk(k);$('add-'+k).focus();render();return}
 pk(k);render()});
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.id&&e.target.id.indexOf('add-')===0){e.preventDefault();e.target.parentNode.querySelector('button').click()}});
-var oldReset=$('reset').onclick;$('reset').onclick=function(){for(var k in PK)PK[k].s=[];oldReset();o2Reset();pkAll()};
+var oldReset=$('reset').onclick;$('reset').onclick=function(){for(var k in PK)PK[k].s=[];oldReset();['rpt','mntB','mntC','strk','code','iso','cby','cpc','tmode','carr'].forEach(function(i){$(i).value=''});$('ama').checked=false;o2Reset();pkAll()};
 svInit();vitAll();pkAll();
 render();
 </script>

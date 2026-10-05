@@ -34,6 +34,14 @@ textarea{min-height:64px;resize:vertical}
 .btn.alt{background:transparent;color:var(--acc)}
 #out p{margin:0 0 .8em}
 .ph{background:var(--ph);color:var(--phink);border-radius:4px;padding:0 3px}
+.pick summary{cursor:pointer;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.chip{font:inherit;font-size:.9rem;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.chip[aria-pressed=true],.chip.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.add{display:flex;gap:8px;margin-top:10px}
+.vit{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}.vit label span{font-size:.8rem;margin:0;color:var(--mute);display:block}
+.chip.pair{display:inline-flex;padding:0;overflow:hidden}.pair button{font:inherit;background:none;border:0;color:inherit;padding:6px 10px;cursor:pointer}.pair .x{padding:6px 9px;border-left:1px solid var(--line)}
+.btn.sm{padding:5px 10px;font-size:.85rem}.sv{align-items:center}
 .hint{color:var(--mute);font-size:.85rem;margin:6px 0 0}
 [hidden]{display:none!important}
 </style></head>
@@ -74,13 +82,14 @@ textarea{min-height:64px;resize:vertical}
       <label class="f"><span>On (floor, chair, bed)</span><input type="text" id="surf"></label>
     </div>
     <label class="f"><span>Chief complaint</span><input type="text" id="cc"></label>
+    <label class="f"><span>Secondary complaint (optional)</span><input type="text" id="cc2"></label>
     <label class="chk" data-t="911"><input type="checkbox" id="snf"> Scene is a nursing facility</label>
     <label class="f" id="nurseWrap"><span>Nurse stated (reason for transport / ED visit)</span><input type="text" id="nreason"></label>
-    <label class="f"><span>History</span><textarea id="hx"></textarea></label>
-    <label class="f"><span>Allergies</span><input type="text" id="alg"></label>
-    <label class="f"><span>Medications</span><textarea id="meds"></textarea></label>
-    <label class="f" data-t="transfer"><span>PTA vitals</span><input type="text" id="pta" placeholder="BP, HR, RR, SpO2, temp, BGL"></label>
-    <label class="f"><span>BLS (initial) assessment</span><textarea id="bls"></textarea></label>
+    <div class="f pick" id="pk-hx"></div>
+    <div class="f pick" id="pk-alg"></div>
+    <div class="f pick" id="pk-meds"></div>
+    <div class="f" data-t="transfer"><span>PTA vitals</span><div class="vit" id="vt-pta"></div></div>
+    <div class="f pick" id="pk-bls"></div>
   </fieldset>
 
   <fieldset data-t="transfer 911" data-o="transport"><legend>Transport</legend>
@@ -88,21 +97,21 @@ textarea{min-height:64px;resize:vertical}
       <label class="f"><span>Transferred from / to</span><input type="text" id="xfer" placeholder="bed to stretcher"></label>
       <label class="f"><span>Method of transfer</span><input type="text" id="xmeth" placeholder="slide sheet, 3-person lift"></label>
     </div>
-    <label class="f"><span>Baseline vitals</span><input type="text" id="base"></label>
-    <label class="f"><span>Vitals reassessed in ambulance</span><input type="text" id="amb"></label>
+    <div class="f"><span>Baseline vitals</span><div class="vit" id="vt-base"></div></div>
+    <div class="f"><span>Vitals reassessed in ambulance</span><div class="vit" id="vt-amb"></div></div>
     <label class="chk"><input type="checkbox" id="cont"> Continuous hemodynamic monitoring</label>
-    <label class="f"><span>Secondary assessment findings</span><textarea id="sec"></textarea></label>
+    <div class="f pick" id="pk-sec"></div>
     <div class="row">
       <label class="f"><span>At drop-off, from (bed, stretcher)</span><input type="text" id="afrom"></label>
       <label class="f"><span>Onto (bed, chair)</span><input type="text" id="ato"></label>
     </div>
     <label class="f"><span>Method of transfer at drop-off</span><input type="text" id="ameth"></label>
     <label class="f" data-t="transfer"><span>Report given to (nurse name)</span><input type="text" id="rn"></label>
-    <label class="f" data-t="transfer"><span>Medical necessity for ambulance transport</span><textarea id="necc"></textarea></label>
+    <div class="f pick" data-t="transfer" id="pk-necc"></div>
   </fieldset>
 
   <fieldset data-t="transfer 911" data-o="refusal"><legend>Patient refusal</legend>
-    <label class="f"><span>Vitals obtained</span><input type="text" id="rvit"></label>
+    <div class="f"><span>Vitals obtained</span><div class="vit" id="vt-rvit"></div></div>
     <label class="f"><span>Patient refused</span>
       <select id="rwhat"><option>transport</option><option>treatment</option><option>treatment and transport</option></select></label>
     <label class="f"><span>Patient's stated reason</span><input type="text" id="rwhy"></label>
@@ -140,13 +149,14 @@ function narrative(){
   var ln=[];
   ln.push('Upon arrival at '+d+', '+u+' arrived onscene to find '+v('age','age')+' year old '+v('sex','sex')+' '+v('pos','position')+' on '+v('surf','floor, chair, bed')+'.');
   var cc='Patient complained of '+v('cc','chief complaint')+'.';
+  var c2=$('cc2').value.trim();if(c2)cc+=' Patient also complained of '+P(c2);
   if(S.t==='transfer'||$('snf').checked)cc+=' Nurse stated '+P(v('nreason','reason for transport'));
   ln.push(cc);
-  ln.push('Patient '+v('hx','history')+', '+v('alg','allergies')+', and '+v('meds','medications')+'.');
-  if(S.t==='transfer')ln.push('PTA vitals were obtained. '+P(v('pta','vitals')));
-  ln.push('BLS assessment was obtained. '+P(v('bls','initial assessment')));
+  var al=PK.alg.s;ln.push('Patient has a history of '+pv('hx','history')+'. '+((al.length===1&&al[0]==='NKDA')?'Patient has no known drug allergies.':'Patient is allergic to '+pv('alg','allergies')+'.')+' Patient takes '+pv('meds','medications')+'.');
+  if(S.t==='transfer')ln.push('PTA vitals were obtained. '+P(vv('pta')));
+  ln.push('BLS assessment was obtained. '+P(pv('bls','initial assessment')));
   if(S.o==='refusal'){
-    ln.push('Vitals were obtained. '+P(v('rvit','vitals')));
+    ln.push('Vitals were obtained. '+P(vv('rvit')));
     var t='';
     if($('cap').checked)t+='Patient was alert and oriented and demonstrated decision-making capacity. ';
     t+='Patient refused '+$('rwhat').value+'. '+P(v('rwhy','reason for refusal'));
@@ -163,15 +173,15 @@ function narrative(){
   }
   ln.push('Patient was transferred '+v('xfer','from / to')+' via '+v('xmeth','method of transfer')+'.');
   ln.push('Patient was strapped x 5, Rails x 2.');
-  ln.push('Baseline vitals were '+P(v('base','vitals')));
-  ln.push('Patient was transferred into ambulance where vitals were reassessed. '+P(v('amb','vitals')));
+  ln.push('Baseline vitals were '+P(vv('base')));
+  ln.push('Patient was transferred into ambulance where vitals were reassessed. '+P(vv('amb')));
   ln.push('Patient was transported to '+dr+'.');
   ln.push($('cont').checked?'Patient was placed on continuous hemodynamic monitoring throughout transport, and vitals were reassessed every half hour.':'Patient vitals were reassessed every half hour throughout transport.');
-  ln.push('Secondary assessment was obtained. '+P(v('sec','assessment findings')));
+  ln.push('Secondary assessment was obtained. '+P(pv('sec','assessment findings')));
   ln.push('Upon arrival at '+dr+', patient was transferred from '+v('afrom','bed, stretcher')+' onto '+v('ato','bed, chair')+' via '+v('ameth','method of transfer')+'.');
   if(S.t==='transfer')ln.push('Patient care, paperwork, and verbal report was transferred to '+v('rn','name of nurse')+'.');
   ln.push('All signatures were obtained.');
-  if(S.t==='transfer')ln.push('Patient requires transportation by ambulance due to '+P(v('necc','medical necessity')));
+  if(S.t==='transfer')ln.push('Patient requires transportation by ambulance due to '+P(pv('necc','medical necessity')));
   return L.concat(ln);
 }
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
@@ -198,6 +208,46 @@ $('copy').onclick=function(){
   function fb(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){m.textContent='Copy failed. Select the text and copy it manually.'}a.remove()}
   try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}
 };
+var PK={
+hx:{t:'History',o:['Hypertension','Diabetes type 2','Diabetes type 1','CHF','COPD','CAD','Atrial fibrillation','CVA/stroke','Dementia','Hyperlipidemia','Asthma','CKD','Dialysis','Hypothyroidism','Seizure disorder','Depression','Anxiety','Cancer','GERD','Parkinson\'s disease','Osteoarthritis','Obesity'],s:[]},
+alg:{t:'Allergies',o:['NKDA','Penicillin','Sulfa','Codeine','Morphine','Latex','Shellfish','Iodine/contrast','Aspirin','NSAIDs'],s:[]},
+meds:{t:'Medications',o:['Lisinopril','Metoprolol','Amlodipine','Furosemide','Metformin','Insulin','Atorvastatin','Aspirin','Eliquis','Warfarin','Plavix','Levothyroxine','Albuterol','Gabapentin','Omeprazole','Sertraline'],s:[]}};
+function jn(a){return a.length<2?a.join(''):a.length==2?a.join(' and '):a.slice(0,-1).join(', ')+', and '+a[a.length-1]}
+var ASSESS=['Alert and oriented x4','Alert and oriented x3','Alert and oriented x2','Alert and oriented x1','Confused at baseline','GCS 15','Speech clear','Slurred speech','Facial droop','PERRL','Moves all extremities','Equal grip strength','Airway patent','Respirations even and unlabored','Labored respirations','Lungs clear bilaterally','Wheezing','Crackles','Diminished lung sounds','Radial pulses strong and regular','Pulses irregular','Skin warm, dry, and pink','Skin pale','Skin diaphoretic','Capillary refill less than 2 seconds','Edema to lower extremities','Abdomen soft and non-tender','Abdomen distended','Pain denied','No signs of trauma','No acute distress'];
+PK.necc={t:'Medical necessity for ambulance transport',s:[],sep:'; ',o:['Patient is bed-confined: unable to get up from bed without assistance, unable to ambulate, and unable to sit in a chair or wheelchair','Patient was bed-confined before and after the ambulance trip','Patient condition contraindicates other means of transportation','Medical condition requires ambulance transport regardless of bed confinement','Emergency situation (accident, injury, or acute illness)','Patient requires restraint to prevent injury to self or others','Patient must remain immobile due to a fracture or possible fracture','Requires advanced airway management','Morbid obesity requiring additional personnel or equipment','Requires oxygen therapy and monitoring during transport','Requires cardiac monitoring during transport','Requires IV or medication monitoring during transport','Requires skilled medical monitoring en route','Altered mental status','Hemodynamic instability','Paralysis or hemiparesis']};
+PK.bls={t:'BLS (initial) assessment',o:ASSESS,s:[],sep:'; '};
+PK.sec={t:'Secondary assessment findings',o:ASSESS,s:[],sep:'; '};
+function pv(k,l){var p=PK[k],s=p.s;return s.length?(p.sep?s.join(p.sep):jn(s)):'{{'+l+'}}'}
+var SV={unit:[],disp:[],drop:[],reason:[]},SVK='epcr-saved-v1';
+try{var raw=localStorage.getItem(SVK);if(raw){var so=JSON.parse(raw);for(var sk in SV)if(Array.isArray(so[sk]))SV[sk]=so[sk]}}catch(e){}
+function svStore(){try{localStorage.setItem(SVK,JSON.stringify(SV))}catch(e){}}
+function svDraw(k){var h='<button type="button" class="btn alt sm" data-svsave="'+k+'">Save entry</button>';
+SV[k].forEach(function(t,i){h+='<span class="chip pair"><button type="button" data-svfill="'+k+'" data-i="'+i+'">'+esc(t)+'</button><button type="button" class="x" data-svdel="'+k+'" data-i="'+i+'" aria-label="Delete saved entry">\u00d7</button></span>'});
+$('sv-'+k).innerHTML=h}
+function svInit(){for(var k in SV){var d=document.createElement('div');d.className='chips sv';d.id='sv-'+k;$(k).parentNode.appendChild(d);svDraw(k)}}
+document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var k;
+if((k=b.dataset.svsave)){var x=$(k).value.trim();if(x&&SV[k].indexOf(x)<0){SV[k].push(x);svStore();svDraw(k)}}
+else if((k=b.dataset.svfill)){$(k).value=SV[k][+b.dataset.i];render()}
+else if((k=b.dataset.svdel)){SV[k].splice(+b.dataset.i,1);svStore();svDraw(k)}});
+var VF=[['bp','BP','BP','120/80',''],['hr','HR','HR','bpm',''],['rr','RR','RR','/min',''],['spo2','SpO2','SpO2','%','%'],['temp','Temp','temp','\u00b0F','\u00b0F'],['bgl','Glucose','BGL','mg/dL',' mg/dL'],['ht','Height','height','ft/in',''],['wt','Weight','weight','lbs',' lbs']];
+function vitAll(){['pta','base','amb','rvit'].forEach(function(set){var h='';VF.forEach(function(f){h+='<label><span>'+f[1]+'</span><input type="text" inputmode="decimal" id="vt-'+set+'-'+f[0]+'" placeholder="'+f[3]+'"></label>'});$('vt-'+set).innerHTML=h})}
+function vv(set){var a=[];VF.forEach(function(f){var x=$('vt-'+set+'-'+f[0]).value.trim();if(!x)return;if(f[4]&&/^[\d.]+$/.test(x))x+=f[4];a.push(f[2]+' '+x)});return a.length?a.join(', '):'{{vitals}}'}
+function pk(k){var p=PK[k],d=$('pk-'+k).querySelector('details');p.open=d?d.open:false;
+var h='<span>'+p.t+'</span><details'+(p.open?' open':'')+'><summary>Select from list or add your own</summary><div class="chips">';
+p.o.forEach(function(o,i){h+='<button type="button" class="chip" data-pk="'+k+'" data-i="'+i+'" aria-pressed="'+(p.s.indexOf(o)>-1)+'">'+esc(o)+'</button>'});
+h+='</div><div class="add"><input type="text" id="add-'+k+'" placeholder="Other: type your own"><button type="button" class="btn" data-add="'+k+'">Add</button></div></details><div class="chips">';
+p.s.forEach(function(o,i){h+='<button type="button" class="chip on" data-rm="'+k+'" data-i="'+i+'" title="Remove">'+esc(o)+' \u00d7</button>'});
+$('pk-'+k).innerHTML=h+'</div>'}
+function pkAll(){for(var k in PK)pk(k)}
+document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+var k=b.dataset.pk||b.dataset.rm||b.dataset.add;if(!k)return;var p=PK[k];
+if(b.dataset.pk){var o=p.o[+b.dataset.i],i=p.s.indexOf(o);if(i>-1)p.s.splice(i,1);else p.s.push(o)}
+else if(b.dataset.rm){p.s.splice(+b.dataset.i,1)}
+else{var inp=$('add-'+k),x=inp.value.trim();if(x&&p.s.indexOf(x)<0)p.s.push(x);inp.value='';pk(k);$('add-'+k).focus();render();return}
+pk(k);render()});
+document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.id&&e.target.id.indexOf('add-')===0){e.preventDefault();e.target.parentNode.querySelector('button').click()}});
+var oldReset=$('reset').onclick;$('reset').onclick=function(){for(var k in PK)PK[k].s=[];oldReset();pkAll()};
+svInit();vitAll();pkAll();
 render();
 </script>
 </body></html>

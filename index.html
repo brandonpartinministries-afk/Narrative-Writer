@@ -69,7 +69,7 @@ textarea{min-height:64px;resize:vertical}
   <fieldset><legend>Dispatch</legend>
     <label class="f"><span>Unit number</span><input type="text" id="unit"></label>
     <label class="f"><span>Dispatched location</span><input type="text" id="disp"></label>
-    <label class="f" data-t="transfer 911 cancel"><span>Drop-off location</span><input type="text" id="drop"></label>
+    <label class="f" data-t="transfer 911"><span>Drop-off location</span><input type="text" id="drop"></label>
     <label class="f"><span>Transport reason</span><input type="text" id="reason"></label>
     <label class="f"><span>Response mode</span><select id="rmode"><option value="">Select</option><option>emergent</option><option>non-emergent</option><option>emergent downgraded to non-emergent</option><option>non-emergent upgraded to emergent</option></select></label>
     <label class="f"><span>Lights and sirens on response</span><select id="rsp"><option value="">Select</option><option>with lights and sirens</option><option>without lights and sirens</option></select></label>
@@ -195,8 +195,8 @@ function $(i){return document.getElementById(i)}
 function v(id,label){var x=$(id).value.trim();return x?x:'{{'+(label||id)+'|'+id+'}}'}
 function P(s){s=s.trim();return /[.!?]$/.test(s)?s:s+'.'}
 function narrative(){
-  var u=v('unit','Unit Number'),d=v('disp','dispatched location'),dr=v('drop','drop off location'),r=v('reason','transport reason'),L=[];
-  var head=S.t==='911'?u+' was dispatched to '+d+' for '+r+'.':u+' was dispatched to '+d+' to transport to '+dr+' for '+r+'.';
+  var u=v('unit','Unit Number'),d=v('disp','dispatched location'),dr=S.t==='cancel'?'':v('drop','drop off location'),r=v('reason','transport reason'),L=[];
+  var head=(S.t==='911'||S.t==='cancel')?u+' was dispatched to '+d+' for '+r+'.':u+' was dispatched to '+d+' to transport to '+dr+' for '+r+'.';
   var rm=$('rmode').value,rs=$('rsp').value;if(rm||rs)head+=' '+u+' responded'+(rm?' '+rm:'')+(rs?' '+rs:'')+'.';
   L.push(head);
   if(S.t==='cancel'){

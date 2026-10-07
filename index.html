@@ -199,7 +199,7 @@ textarea{min-height:64px;resize:vertical}
 
 <section class="outcol">
   <div class="outcard">
-    <div class="outhead"><b>Narrative</b><span><button class="btn alt" id="editBtn">Edit text</button> <button class="btn" id="copy">Copy</button> <button class="btn alt" id="printBtn">Print / PDF</button></span></div>
+    <div class="outhead"><b>Narrative</b><span><button class="btn alt" id="editBtn">Edit text</button> <button class="btn" id="copy">Copy</button> <button class="btn alt" id="printBtn">Save PDF</button></span></div>
     <details class="fmt" id="fmt"><summary>Layout and style</summary>
       <label class="f"><span>Writing format</span><select id="fFmt"><option value="chrono">Chronological (sequential)</option><option value="soap">SOAP: Subjective, Objective, Assessment, Plan</option><option value="chart">CHART: Chief complaint, History, Assessment, Rx, Transport</option><option value="cheated">CHEATED: Chief complaint, History, Exam, Assessment, Treatment, Evaluation, Disposition</option><option value="dchart">DCHART: Dispatch, Complaint, History, Assessment, Rx, Transport</option></select></label>
       <p class="hint">Cancellations always use the chronological format.</p>
@@ -210,6 +210,7 @@ textarea{min-height:64px;resize:vertical}
         <label class="f"><span>Text size</span><select id="fSize"><option value="s">Small</option><option value="m">Medium</option><option value="l">Large</option></select></label>
       </div>
     </details>
+    <p id="gmsg" class="warn" hidden></p>
     <div id="warn" class="warn" hidden></div>
     <div id="miss" class="miss"></div>
     <div id="out" aria-live="polite"></div>
@@ -480,13 +481,32 @@ w.innerHTML=WARNN?'<b>Please review</b><ul>'+W.concat(R).map(function(x){return 
 /* ---- copy / print guard ---- */
 var CONF='',CONFT=null;
 function guard(label,go){if(!EDIT&&(MISS.length||WARNN)&&CONF!==label){var m=[];if(MISS.length)m.push(MISS.length+' item'+(MISS.length>1?'s':'')+' missing');if(WARNN)m.push(WARNN+' to review');
-$('msg').textContent=m.join(' and ')+'. Tap '+label+' again to continue anyway.';CONF=label;clearTimeout(CONFT);CONFT=setTimeout(function(){CONF='';$('msg').textContent=''},8000);return}
-CONF='';clearTimeout(CONFT);go()}
+var g=$('gmsg');g.textContent=m.join(' and ')+'. Tap '+label+' again to continue anyway.';g.hidden=false;g.scrollIntoView({block:'nearest'});CONF=label;clearTimeout(CONFT);CONFT=setTimeout(function(){CONF='';$('gmsg').hidden=true},8000);return}
+CONF='';clearTimeout(CONFT);$('gmsg').hidden=true;go()}
 var copy0=$('copy').onclick;$('copy').onclick=function(){var me=this;guard('Copy',function(){copy0.call(me)})};
-$('printBtn').onclick=function(){guard('Print / PDF',function(){$('msg').textContent='';
-var t=EDIT?$('editor').value:plain(),pr=document.createElement('div');pr.id='printOut';pr.textContent=t;document.body.appendChild(pr);
-function rm(){if(pr.parentNode)pr.parentNode.removeChild(pr)}
-window.addEventListener('afterprint',rm,{once:true});setTimeout(rm,60000);window.print()})};
+function pdfBytes(text){
+var W=612,H=792,M=54,FS=11,LH=15,maxW=W-2*M-6,cv=document.createElement('canvas').getContext('2d');cv.font=FS+'px Helvetica,Arial,sans-serif';
+function clean(t){return t.replace(/[\u2018\u2019]/g,"'").replace(/[\u201c\u201d]/g,'"').replace(/[\u2013\u2014]/g,'-').replace(/\u00d7/g,'x').replace(/[^\x20-\x7e\xa0-\xff]/g,'?')}
+function esc2(t){return t.replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')}
+var L=[];text.split('\n').forEach(function(par){par=clean(par);if(!par.trim()){L.push({t:'',b:0});return}
+var bold=/^[A-Z][A-Z \/]*:$/.test(par.trim()),cur='';par.split(' ').forEach(function(w){var t=cur?cur+' '+w:w;if(cur&&cv.measureText(t).width>maxW){L.push({t:cur,b:bold});cur=w}else cur=t});L.push({t:cur,b:bold})});
+var per=Math.floor((H-2*M)/LH),pages=[];for(var i=0;i<L.length;i+=per)pages.push(L.slice(i,i+per));if(!pages.length)pages.push([]);
+var objs=[];function add(o){objs.push(o);return objs.length}
+add('<< /Type /Catalog /Pages 2 0 R >>');add('');
+add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+var kids=[];pages.forEach(function(pg){var c='';pg.forEach(function(l,n){if(l.t)c+='BT /'+(l.b?'F2':'F1')+' '+FS+' Tf '+M+' '+(H-M-FS-n*LH)+' Td ('+esc2(l.t)+') Tj ET\n'});
+var cid=add('<< /Length '+c.length+' >>\nstream\n'+c+'endstream');
+kids.push(add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+W+' '+H+'] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents '+cid+' 0 R >>'))});
+objs[1]='<< /Type /Pages /Kids ['+kids.map(function(k){return k+' 0 R'}).join(' ')+'] /Count '+kids.length+' >>';
+var out='%PDF-1.4\n',off=[];objs.forEach(function(o,n){off.push(out.length);out+=(n+1)+' 0 obj\n'+o+'\nendobj\n'});
+var x=out.length;out+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n';off.forEach(function(o){out+=('0000000000'+o).slice(-10)+' 00000 n \n'});
+out+='trailer\n<< /Size '+(objs.length+1)+' /Root 1 0 R >>\nstartxref\n'+x+'\n%%EOF';
+var u=new Uint8Array(out.length);for(var k=0;k<out.length;k++)u[k]=out.charCodeAt(k)&255;return u}
+function savePdf(){var t=EDIT?$('editor').value:plain(),blob=new Blob([pdfBytes(t)],{type:'application/pdf'}),name='narrative-'+new Date().toISOString().slice(0,10)+'.pdf';
+try{var f=new File([blob],name,{type:'application/pdf'});if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:'Narrative'}).catch(function(){});return}}catch(e){}
+var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},4000)}
+$('printBtn').onclick=function(){guard('Save PDF',savePdf)};
 
 /* ---- saved custom list entries ---- */
 var CK='epcr-custom-v1',CU={};

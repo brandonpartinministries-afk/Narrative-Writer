@@ -4,7 +4,12 @@
 <link rel="apple-touch-icon" sizes="180x180" href="ems-badge-v2.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="ems-badge-v2.png">
 <link rel="icon" type="image/png" href="ems-badge-v2.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <meta name="apple-mobile-web-app-title" content="ePCR Writer">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b6e8a">
+<link rel="manifest" href="manifest.json">
 <title>ePCR Narrative Writer</title>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -15,6 +20,7 @@
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Atkinson Hyperlegible",system-ui,sans-serif}
 header{padding:16px 16px 4px;max-width:1100px;margin:auto}
 h1{font-size:1.4rem;margin:0}
+.brand{display:flex;align-items:center;gap:12px}.logo{height:44px;width:auto;border-radius:6px;background:#fff;flex:none}
 .sub{color:var(--mute);margin:2px 0 0;font-size:.9rem}
 main{max-width:1100px;margin:auto;padding:12px 16px 32px;display:grid;gap:16px}
 @media(min-width:900px){main{grid-template-columns:1fr 1fr;align-items:start}.outcol{position:sticky;top:12px}}
@@ -36,9 +42,14 @@ textarea{min-height:64px;resize:vertical}
 .outhead b{font-size:1.05rem}
 .btn{padding:9px 14px;border-radius:8px;border:2px solid var(--acc);background:var(--acc);color:var(--acc-ink);font:inherit;font-weight:700;cursor:pointer}
 .btn.alt{background:transparent;color:var(--acc)}
+.fmt{margin:0 0 10px}.fmt summary{cursor:pointer;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-weight:700}
+#out p.hd{font-weight:700;color:var(--acc);margin:1em 0 .25em;text-transform:uppercase;font-size:.9em;letter-spacing:.03em}
+#out p.hd:first-child{margin-top:0}
+#out.lines p{margin:0 0 .35em}
 #out p{margin:0 0 .8em}
 .ph{background:var(--ph);color:var(--phink);border-radius:4px;padding:0 3px}
 .pick summary{cursor:pointer;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-weight:700}
+.ddsel{width:100%;font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);margin-top:6px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
 .chip{font:inherit;font-size:.9rem;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
 .chip[aria-pressed=true],.chip.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
@@ -50,12 +61,19 @@ textarea{min-height:64px;resize:vertical}
 .xrow{display:flex;gap:6px;margin-top:8px}.xrow input{flex:1;min-width:0}
 .miss{margin:0 0 8px;font-size:.9rem}
 .hint{color:var(--mute);font-size:.85rem;margin:6px 0 0}
+.draftbar{background:var(--ph);color:var(--phink);border-radius:8px;padding:8px 12px;margin:0 0 10px;font-size:.9rem;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.warn{background:var(--ph);color:var(--phink);border-radius:8px;padding:8px 12px;margin:0 0 8px;font-size:.9rem}.warn ul{margin:4px 0 0 18px;padding:0}
+.badv{border-color:#d97706!important;box-shadow:0 0 0 2px rgba(217,119,6,.35)}
+.outhead{flex-wrap:wrap}.outhead>span{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+#printOut{display:none}
+@media print{body>*:not(#printOut){display:none!important}#printOut{display:block!important;white-space:pre-wrap;font:12pt/1.5 Georgia,"Times New Roman",serif;color:#000;background:#fff;padding:0}}
 [hidden]{display:none!important}
 </style></head>
 <body>
-<header><h1>ePCR Narrative Writer</h1><p class="sub">Fill in the fields. The narrative updates as you type; yellow items are still missing.</p></header>
+<header><div class="brand"><img class="logo" src="data:image/png;base64,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" alt="" width="60" height="38"><h1>ePCR Narrative Writer</h1></div><p class="sub">Fill in the fields. The narrative updates as you type; yellow items are still missing.</p></header>
 <main>
 <section id="form">
+  <div class="draftbar" id="draftBar" hidden><span id="draftTxt"></span> <button type="button" class="btn alt sm" id="draftDel">Discard draft</button></div>
   <div class="seg" id="typeSeg" role="group" aria-label="Call type">
     <button data-k="transfer" aria-pressed="true">Transfer</button>
     <button data-k="911" aria-pressed="false">911</button>
@@ -176,12 +194,23 @@ textarea{min-height:64px;resize:vertical}
     <label class="chk"><input type="checkbox" id="ama"> Leaving against medical advice (AMA)</label>
     <label class="f"><span>Advised to call 911 / seek care if (optional)</span><input type="text" id="adv"></label>
   </fieldset>
-  <button class="btn alt" id="reset">Clear all fields</button>
+  <button class="btn alt" id="reset">Clear all fields</button> <button class="btn alt" id="clrCu">Clear saved list entries</button>
 </section>
 
 <section class="outcol">
   <div class="outcard">
-    <div class="outhead"><b>Narrative</b><span><button class="btn alt" id="editBtn">Edit text</button> <button class="btn" id="copy">Copy</button></span></div>
+    <div class="outhead"><b>Narrative</b><span><button class="btn alt" id="editBtn">Edit text</button> <button class="btn" id="copy">Copy</button> <button class="btn alt" id="printBtn">Print / PDF</button></span></div>
+    <details class="fmt" id="fmt"><summary>Layout and style</summary>
+      <label class="f"><span>Writing format</span><select id="fFmt"><option value="chrono">Chronological (sequential)</option><option value="soap">SOAP: Subjective, Objective, Assessment, Plan</option><option value="chart">CHART: Chief complaint, History, Assessment, Rx, Transport</option><option value="cheated">CHEATED: Chief complaint, History, Exam, Assessment, Treatment, Evaluation, Disposition</option><option value="dchart">DCHART: Dispatch, Complaint, History, Assessment, Rx, Transport</option></select></label>
+      <p class="hint">Cancellations always use the chronological format.</p>
+      <div class="row">
+        <label class="f"><span>Layout</span><select id="fLay"><option value="para">Paragraphs</option><option value="block">Single block</option><option value="lines">One sentence per line</option></select></label>
+        <label class="f"><span>Wording</span><select id="fWord"><option value="full">Full words</option><option value="abbr">EMS abbreviations</option></select></label>
+        <label class="f"><span>Font</span><select id="fFont"><option value="">Default</option><option value="serif">Serif</option><option value="mono">Monospace</option></select></label>
+        <label class="f"><span>Text size</span><select id="fSize"><option value="s">Small</option><option value="m">Medium</option><option value="l">Large</option></select></label>
+      </div>
+    </details>
+    <div id="warn" class="warn" hidden></div>
     <div id="miss" class="miss"></div>
     <div id="out" aria-live="polite"></div>
     <textarea id="editor" hidden style="min-height:320px"></textarea>
@@ -194,63 +223,90 @@ var S={t:'transfer',o:'transport'};var MISS=[],MI=0,EDIT=false;
 function $(i){return document.getElementById(i)}
 function v(id,label){var x=$(id).value.trim();return x?x:'{{'+(label||id)+'|'+id+'}}'}
 function P(s){s=s.trim();return /[.!?]$/.test(s)?s:s+'.'}
-function narrative(){
+function narrative(){return narrativeX().map(function(x){return x.t})}
+function narrativeX(){
   var u=v('unit','Unit Number'),d=v('disp','dispatched location'),dr=S.t==='cancel'?'':v('drop','drop off location'),r=v('reason','transport reason'),L=[];
+  function X(k,t){L.push({k:k,t:t})}
   var head=(S.t==='911'||S.t==='cancel')?u+' was dispatched to '+d+' for '+r+'.':u+' was dispatched to '+d+' to transport to '+dr+' for '+r+'.';
   var rm=$('rmode').value,rs=$('rsp').value;if(rm||rs)head+=' '+u+' responded'+(rm?' '+rm:'')+(rs?' '+rs:'')+'.';
-  L.push(head);
+  X('disp',head);
   if(S.t==='cancel'){
     var by=$('cby').value;if(by==='Other')by=$('cbyO').value.trim();
-    L.push(u+' was cancelled '+$('when').value+(by?' by '+by:'')+'. '+P(v('cwhy','reason for cancellation'))+($('cpc').value?' '+$('cpc').value+'.':''));
+    X('disp',u+' was cancelled '+$('when').value+(by?' by '+by:'')+'. '+P(v('cwhy','reason for cancellation'))+($('cpc').value?' '+$('cpc').value+'.':''));
     return L;
   }
-  var ln=[];
-  ln.push('Upon arrival at '+d+', '+u+' arrived onscene to find '+v('age','age')+' year old '+v('sex','sex')+' '+v('pos','position')+' on '+v('surf','floor, chair, bed')+'.'+o2Found());
+  X('scene','Upon arrival at '+d+', '+u+' arrived onscene to find '+v('age','age')+' year old '+v('sex','sex')+' '+v('pos','position')+' on '+v('surf','floor, chair, bed')+'.'+o2Found());
   var cc='Patient complained of '+v('cc','chief complaint')+'.';
   var c2=$('cc2').value.trim();if(c2)cc+=' Patient also complained of '+P(c2);
   if(S.t==='transfer'||$('snf').checked)cc+=' Nurse stated '+P(v('nreason','reason for transport'));
-  ln.push(cc);
-  var al=PK.alg.s;ln.push('Patient has a history of '+pv('hx','history')+'. '+((al.length===1&&al[0]==='NKDA')?'Patient has no known drug allergies.':'Patient is allergic to '+pv('alg','allergies')+'.')+' Patient takes '+pv('meds','medications')+'.'+codeIso());
-  if(S.t==='transfer')ln.push('PTA vitals were obtained. '+P(vv('pta')));
-  ln.push('BLS assessment was obtained. '+P(pv('bls','initial assessment')));
-  var ad=addl();if(ad)ln.push(ad);var dv=devline();if(dv)ln.push(dv);var tx=txline();if(tx)ln.push(tx);var im=impline();if(im)ln.push(im);var sp=specline();if(sp)ln.push(sp);
+  X('cc',cc);
+  var al=PK.alg.s;X('hx','Patient has a history of '+pv('hx','history')+'. '+((al.length===1&&al[0]==='NKDA')?'Patient has no known drug allergies.':'Patient is allergic to '+pv('alg','allergies')+'.')+' Patient takes '+pv('meds','medications')+'.'+codeIso());
+  if(S.t==='transfer')X('vit','PTA vitals were obtained. '+P(vv('pta')));
+  X('exam','BLS assessment was obtained. '+P(pv('bls','initial assessment')));
+  var ad=addl();if(ad)X('exam',ad);var dv=devline();if(dv)X('exam',dv);var tx=txline();if(tx)X('tx',tx);var im=impline();if(im)X('imp',im);var sp=specline();if(sp)X('exam',sp);
   if(S.o==='refusal'){
-    ln.push('Vitals were obtained. '+P(vv('rvit')));
-    extraSets('more-ref').forEach(function(t){ln.push(t)});
+    X('vit','Vitals were obtained. '+P(vv('rvit')));
+    extraSets('more-ref').forEach(function(t){X('vit',t)});
     var t='';
     if($('cap').checked)t+='Patient was alert and oriented and demonstrated decision-making capacity. ';
     t+='Patient refused '+$('rwhat').value+'. '+P(v('rwhy','reason for refusal'));
-    ln.push(t);
+    X('ref',t);
     var rk='Risks of refusal, including '+v('risks','risks')+', were explained to the patient, who verbalized understanding.';
     if($('mc').checked)rk+=' Medical control ('+v('mcn','name')+') was contacted.';
     if($('ama').checked)rk+=' Patient is leaving against medical advice.';var wt=$('wit').value.trim();if(wt)rk+=' Refusal was witnessed by '+wt+'.';
-    ln.push(rk);
+    X('ref',rk);
     var lf='Patient was left '+v('left','where / with whom')+'.';
     var a=$('adv').value.trim();
     if(a)lf+=' Patient was advised to call 911 or seek care if '+P(a);
-    ln.push(lf);
-    ln.push('Refusal paperwork was completed. '+sigline());
-    return L.concat(ln).concat(tail());
+    X('ref',lf);
+    X('ref','Refusal paperwork was completed. '+sigline());
+    tail().forEach(function(t){X('end',t)});
+    return L;
   }
-  ln.push('Patient was transferred '+v('xfer','from / to')+' via '+v('xmeth','method of transfer')+'.');
-  ln.push('Patient was strapped x 5, Rails x 2.');
-  ln.push('Baseline vitals were '+P(vv('base')));
-  ln.push('Patient was transferred into ambulance where vitals were reassessed. '+P(vv('amb')));
+  X('tx','Patient was transferred '+v('xfer','from / to')+' via '+v('xmeth','method of transfer')+'.');
+  X('tx','Patient was strapped x 5, Rails x 2.');
+  X('vit','Baseline vitals were '+P(vv('base')));
+  X('eval','Patient was transferred into ambulance where vitals were reassessed. '+P(vv('amb')));
   var tm=$('tmeth').value;if(tm==='Other')tm=$('tmethO').value.trim();
-  ln.push('Patient was transported to '+dr+(tm?' via '+tm:'')+($('tresp').value?', '+$('tresp').value:'')+($('tmode').value?($('tresp').value?', ':' ')+$('tmode').value:'')+'.');
-  if(S.t==='911')ln.push('Radio report was given prior to arrival via '+rptv()+'.');
-  var dl=destline();if(dl)ln.push(dl);
-  extraSets('more-trans').forEach(function(t){ln.push(t)});
-  ln.push('Secondary assessment was obtained. '+P(pv('sec','assessment findings')));
-  ln.push('Upon arrival at '+dr+', patient was transferred from '+v('afrom','bed, stretcher')+' onto '+v('ato','bed, chair')+' via '+v('ameth','method of transfer')+'.'+($('carr').value?' Patient condition upon arrival was '+$('carr').value+'.':''));
-  if(S.t==='transfer')ln.push('Patient care, paperwork, and verbal report was transferred to '+v('rn','name of nurse')+'.');
-  ln.push(sigline());
-  if(S.t==='transfer')ln.push('Patient requires transportation by ambulance due to '+P(pv('necc','medical necessity')));
-  return L.concat(ln).concat(tail());
+  X('trn','Patient was transported to '+dr+(tm?' via '+tm:'')+($('tresp').value?', '+$('tresp').value:'')+($('tmode').value?($('tresp').value?', ':' ')+$('tmode').value:'')+'.');
+  if(S.t==='911')X('trn','Radio report was given prior to arrival via '+rptv()+'.');
+  var dl=destline();if(dl)X('trn',dl);
+  extraSets('more-trans').forEach(function(t){X('eval',t)});
+  X('exam','Secondary assessment was obtained. '+P(pv('sec','assessment findings')));
+  X('trn','Upon arrival at '+dr+', patient was transferred from '+v('afrom','bed, stretcher')+' onto '+v('ato','bed, chair')+' via '+v('ameth','method of transfer')+'.'+($('carr').value?' Patient condition upon arrival was '+$('carr').value+'.':''));
+  if(S.t==='transfer')X('trn','Patient care, paperwork, and verbal report was transferred to '+v('rn','name of nurse')+'.');
+  X('trn',sigline());
+  if(S.t==='transfer')X('trn','Patient requires transportation by ambulance due to '+P(pv('necc','medical necessity')));
+  tail().forEach(function(t){X('end',t)});
+  return L;
 }
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function phRe(){return /\{\{([^|}]*)(?:\|([^}]*))?\}\}/g}
-function plain(){return narrative().join('\n\n').replace(phRe(),'($1)')}
+var FM={fmt:'chrono',lay:'para',word:'full',font:'',size:'m'};
+try{var fr=localStorage.getItem('ePCRfmt');if(fr){var fo=JSON.parse(fr);for(var fk in FM)if(typeof fo[fk]==='string')FM[fk]=fo[fk]}}catch(e){}
+function abbr(p){return p.split(/(\{\{[^}]*\}\})/).map(function(g){if(g.indexOf('{{')===0)return g;
+return g.replace(/Patient also complained of/g,'Pt also c/o').replace(/Patient complained of/g,'Pt c/o').replace(/\byear old\b/g,'y/o').replace(/\bhistory of\b/g,'hx of').replace(/\bno known drug allergies\b/g,'NKDA').replace(/\bPatient\b/g,'Pt').replace(/\bpatient\b/g,'pt')}).join('')}
+var FMT={
+soap:[['Subjective',['disp','scene','cc','hx']],['Objective',['vit','exam','eval']],['Assessment',['imp']],['Plan',['tx','trn','ref','sig','end']]],
+chart:[['Chief Complaint',['disp','scene','cc']],['History',['hx']],['Assessment',['vit','exam','imp']],['Rx / Treatment',['tx','eval']],['Transport',['trn','ref','sig','end']]],
+cheated:[['Chief Complaint',['disp','scene','cc']],['History',['hx']],['Examination',['vit','exam']],['Assessment',['imp']],['Treatment',['tx']],['Evaluation',['eval']],['Disposition',['trn','ref','sig','end']]],
+dchart:[['Dispatch',['disp','scene']],['Complaint',['cc']],['History',['hx']],['Assessment',['vit','exam','imp']],['Rx / Treatment',['tx','eval']],['Transport',['trn','ref','sig','end']]]};
+function groups(X){var f=FMT[FM.fmt];if(!f||S.t==='cancel')return [{h:null,a:X.map(function(x){return x.t})}];
+var g=f.map(function(sec){return {h:sec[0],a:X.filter(function(x){return sec[1].indexOf(x.k)>-1}).map(function(x){return x.t})}}).filter(function(x){return x.a.length});
+return g}
+function shape(X){var out=[];groups(X).forEach(function(g){var a=g.a.slice();if(FM.word==='abbr')a=a.map(abbr);
+if(FM.lay==='block')a=[a.join(' ')];
+else if(FM.lay==='lines'){var o=[];a.forEach(function(x){x.split(/(?<=[.!?])\s+(?=[A-Z{(])/).forEach(function(y){o.push(y)})});a=o}
+if(g.h)out.push('##'+g.h);a.forEach(function(x){out.push(x)})});return out}
+function plain(){var N=shape(narrativeX()),t='',sep=FM.lay==='lines'?'\n':'\n\n';N.forEach(function(x,i){var h=x.indexOf('##')===0,ph=i>0&&N[i-1].indexOf('##')===0;
+if(i>0)t+=ph?'\n':(h?'\n\n':sep);t+=h?x.slice(2).toUpperCase()+':':x});return t.replace(phRe(),'($1)')}
+function applyFmt(){var ff={'':'inherit',serif:'Georgia,"Times New Roman",serif',mono:'ui-monospace,Menlo,Consolas,monospace'}[FM.font]||'inherit';
+var fs={s:'.85rem',m:'1rem',l:'1.2rem'}[FM.size]||'1rem';
+['out','editor'].forEach(function(i){$(i).style.fontFamily=ff;$(i).style.fontSize=fs});
+$('out').className=FM.lay==='lines'?'lines':'';
+$('fFmt').value=FM.fmt;$('fLay').value=FM.lay;$('fWord').value=FM.word;$('fFont').value=FM.font;$('fSize').value=FM.size}
+[['fFmt','fmt'],['fLay','lay'],['fWord','word'],['fFont','font'],['fSize','size']].forEach(function(x){$(x[0]).onchange=function(){FM[x[1]]=this.value;try{localStorage.setItem('ePCRfmt',JSON.stringify(FM))}catch(e){}applyFmt();
+if(EDIT){if(x[1]==='fmt'||x[1]==='lay'||x[1]==='word')$('msg').textContent='Tap Regenerate to apply this format, layout or wording (this replaces your edits).'}else render()}});
 function render(){
   var q;
   document.querySelectorAll('[data-t]').forEach(function(e){
@@ -266,9 +322,10 @@ function render(){
   $('imp1O').hidden=$('imp1').value!=='Other';$('imp2O').hidden=$('imp2').value!=='Other';
   $('cbyO').hidden=$('cby').value!=='Other';
   $('mcWrap').hidden=!$('mc').checked||S.t==='cancel'||S.o!=='refusal';
+  checkVals();
   if(EDIT)return;
-  var N=narrative();
-  $('out').innerHTML=N.map(function(p){return '<p>'+esc(p).replace(phRe(),'<span class="ph">($1)</span>')+'</p>'}).join('');
+  var N=shape(narrativeX());
+  $('out').innerHTML=N.map(function(p){if(p.indexOf('##')===0)return '<p class="hd">'+esc(p.slice(2))+'</p>';return '<p>'+esc(p).replace(phRe(),'<span class="ph">($1)</span>')+'</p>'}).join('');
   var ids=[],m,re=phRe(),all=N.join(' ');while((m=re.exec(all)))ids.push(m[2]||'');MISS=ids;
   $('miss').innerHTML=ids.length?'<b>'+ids.length+' item'+(ids.length>1?'s':'')+' missing</b> <button type="button" class="btn alt sm" id="nextMiss">Next</button>':'<b>No items missing</b>';
 }
@@ -282,10 +339,13 @@ $('copy').onclick=function(){
   function fb(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){m.textContent='Copy failed. Select the text and copy it manually.'}a.remove()}
   try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}
 };
+var MEDS='Lisinopril|Enalapril|Ramipril|Benazepril|Captopril|Quinapril|Fosinopril|Losartan|Valsartan|Irbesartan|Olmesartan|Candesartan|Telmisartan|Sacubitril/valsartan (Entresto)|Metoprolol tartrate|Metoprolol succinate|Atenolol|Carvedilol|Propranolol|Bisoprolol|Labetalol|Nadolol|Nebivolol|Amlodipine|Nifedipine|Diltiazem|Verapamil|Felodipine|Hydrochlorothiazide|Chlorthalidone|Furosemide (Lasix)|Bumetanide|Torsemide|Spironolactone|Eplerenone|Triamterene/hydrochlorothiazide|Metolazone|Clonidine|Hydralazine|Isosorbide mononitrate|Isosorbide dinitrate|Nitroglycerin|Ranolazine|Digoxin|Amiodarone|Sotalol|Flecainide|Propafenone|Dofetilide|Midodrine|Doxazosin|Terazosin|Prazosin|Minoxidil|Methyldopa|Atorvastatin|Rosuvastatin|Simvastatin|Pravastatin|Lovastatin|Ezetimibe|Fenofibrate|Gemfibrozil|Niacin|Evolocumab (Repatha)|Alirocumab (Praluent)|Icosapent ethyl (Vascepa)|Apixaban (Eliquis)|Rivaroxaban (Xarelto)|Dabigatran (Pradaxa)|Edoxaban (Savaysa)|Warfarin (Coumadin)|Clopidogrel (Plavix)|Prasugrel (Effient)|Ticagrelor (Brilinta)|Aspirin|Cilostazol|Dipyridamole|Pentoxifylline|Enoxaparin (Lovenox)|Heparin|Metformin|Glipizide|Glimepiride|Glyburide|Pioglitazone|Sitagliptin (Januvia)|Linagliptin (Tradjenta)|Saxagliptin|Empagliflozin (Jardiance)|Dapagliflozin (Farxiga)|Canagliflozin (Invokana)|Semaglutide (Ozempic)|Semaglutide (Wegovy)|Liraglutide (Victoza)|Dulaglutide (Trulicity)|Tirzepatide (Mounjaro)|Repaglinide|Acarbose|Insulin (unspecified)|Insulin glargine (Lantus)|Insulin glargine (Basaglar)|Insulin detemir (Levemir)|Insulin degludec (Tresiba)|Insulin lispro (Humalog)|Insulin aspart (Novolog)|Insulin regular (Humulin R/Novolin R)|Insulin NPH|Insulin 70/30|Glucagon|Albuterol|Levalbuterol|Ipratropium|Tiotropium (Spiriva)|Umeclidinium|Fluticasone/salmeterol (Advair)|Budesonide/formoterol (Symbicort)|Fluticasone/umeclidinium/vilanterol (Trelegy)|Fluticasone nasal (Flonase)|Budesonide|Beclomethasone|Montelukast (Singulair)|Theophylline|Roflumilast (Daliresp)|Home oxygen|Prednisone|Prednisolone|Methylprednisolone|Dexamethasone|Hydrocortisone|Fludrocortisone|Guaifenesin|Benzonatate|Dextromethorphan|Pseudoephedrine|Cetirizine|Loratadine|Fexofenadine|Diphenhydramine|Hydroxyzine|Cyproheptadine|Azelastine nasal|Omeprazole|Pantoprazole|Esomeprazole|Lansoprazole|Rabeprazole|Famotidine|Sucralfate|Ondansetron|Metoclopramide|Promethazine|Prochlorperazine|Meclizine|Loperamide|Dicyclomine|Hyoscyamine|Docusate|Senna|Bisacodyl|Polyethylene glycol (Miralax)|Lactulose|Mesalamine|Sulfasalazine|Ursodiol|Simethicone|Linaclotide|Rifaximin|Calcium carbonate (Tums)|Magnesium oxide|Gabapentin|Pregabalin|Levetiracetam (Keppra)|Lamotrigine|Carbamazepine|Oxcarbazepine|Phenytoin|Divalproex / valproic acid|Topiramate|Lacosamide|Phenobarbital|Primidone|Zonisamide|Carbidopa/levodopa (Sinemet)|Pramipexole|Ropinirole|Entacapone|Amantadine|Benztropine|Donepezil (Aricept)|Memantine (Namenda)|Rivastigmine|Galantamine|Sumatriptan|Rizatriptan|Baclofen|Tizanidine|Cyclobenzaprine|Methocarbamol|Carisoprodol|Pyridostigmine|Riluzole|Sertraline|Escitalopram|Citalopram|Fluoxetine|Paroxetine|Venlafaxine|Duloxetine|Desvenlafaxine|Bupropion|Mirtazapine|Trazodone|Amitriptyline|Nortriptyline|Doxepin|Buspirone|Lithium|Quetiapine|Olanzapine|Risperidone|Aripiprazole|Haloperidol|Ziprasidone|Clozapine|Lurasidone|Paliperidone|Brexpiprazole|Lorazepam|Alprazolam|Clonazepam|Diazepam|Temazepam|Zolpidem|Eszopiclone|Melatonin|Methylphenidate|Amphetamine/dextroamphetamine (Adderall)|Lisdexamfetamine|Atomoxetine|Guanfacine|Naltrexone|Buprenorphine|Buprenorphine/naloxone (Suboxone)|Methadone|Disulfiram|Acamprosate|Varenicline|Nicotine patch|Naloxone (Narcan)|Acetaminophen (Tylenol)|Ibuprofen|Naproxen|Meloxicam|Diclofenac|Celecoxib|Ketorolac|Indomethacin|Etodolac|Nabumetone|Oxycodone|Oxycodone/acetaminophen (Percocet)|Hydrocodone/acetaminophen (Norco)|Morphine|Hydromorphone (Dilaudid)|Fentanyl patch|Tramadol|Tapentadol|Codeine|Oxymorphone|Lidocaine patch|Capsaicin topical|Colchicine|Allopurinol|Febuxostat|Probenecid|Methotrexate|Hydroxychloroquine|Leflunomide|Adalimumab (Humira)|Etanercept (Enbrel)|Azathioprine|Mycophenolate|Tacrolimus|Cyclosporine|Sirolimus|Tofacitinib|Amoxicillin|Amoxicillin/clavulanate (Augmentin)|Penicillin V|Ampicillin|Piperacillin/tazobactam|Cephalexin (Keflex)|Cefuroxime|Cefdinir|Cefpodoxime|Ceftriaxone|Cefazolin|Azithromycin (Zithromax)|Clarithromycin|Erythromycin|Doxycycline|Minocycline|Tetracycline|Ciprofloxacin|Levofloxacin|Moxifloxacin|Sulfamethoxazole/trimethoprim (Bactrim)|Nitrofurantoin|Metronidazole|Clindamycin|Vancomycin|Linezolid|Rifampin|Isoniazid|Gentamicin|Fluconazole|Nystatin|Terbinafine|Acyclovir|Valacyclovir|Oseltamivir|Ivermectin|Mupirocin topical|Bictegravir/emtricitabine/tenofovir (Biktarvy)|Dolutegravir|Levothyroxine (Synthroid)|Liothyronine|Methimazole|Propylthiouracil|Alendronate|Risedronate|Ibandronate|Denosumab (Prolia)|Calcitriol|Vitamin D|Calcium|Estradiol|Medroxyprogesterone|Norethindrone|Oral contraceptive|Levonorgestrel|Progesterone|Testosterone|Tamsulosin (Flomax)|Finasteride|Dutasteride|Oxybutynin|Tolterodine|Solifenacin|Mirabegron|Sildenafil|Tadalafil|Desmopressin|Cabergoline|Anastrozole|Letrozole|Tamoxifen|Bicalutamide|Raloxifene|Chemotherapy (unspecified)|Folic acid|Vitamin B12|Ferrous sulfate (iron)|Potassium chloride (K-Dur)|Magnesium|Multivitamin|Vitamin C|Thiamine|Sodium bicarbonate|Sevelamer|Calcium acetate|Epoetin|Cinacalcet|Hydroxyurea|Latanoprost eye drops|Timolol eye drops|Brimonidine eye drops|Dorzolamide eye drops|Artificial tears|Epinephrine auto-injector (EpiPen)'.split('|').sort(function(a,b){return a.toLowerCase()<b.toLowerCase()?-1:1});
+var ALGX='NKDA|Latex|Shellfish|Fish|Eggs|Peanuts|Tree nuts|Milk / dairy|Soy|Wheat / gluten|Iodine / contrast dye|Adhesive / tape|Bee / wasp stings|Seasonal / environmental|Penicillins|Cephalosporins|Sulfa drugs|NSAIDs|Opioids|ACE inhibitors|Macrolides|Fluoroquinolones|Tetracyclines|Anticonvulsants|Anesthetics'.split('|');
+var ALGS=ALGX.slice(1).concat(MEDS).sort(function(a,b){return a.toLowerCase()<b.toLowerCase()?-1:1});ALGS.unshift('NKDA');
 var PK={
 hx:{t:'History',o:['Hypertension','Diabetes type 2','Diabetes type 1','CHF','COPD','CAD','Atrial fibrillation','CVA/stroke','Dementia','Hyperlipidemia','Asthma','CKD','Dialysis','Hypothyroidism','Seizure disorder','Depression','Anxiety','Cancer','GERD','Parkinson\'s disease','Osteoarthritis','Obesity'],s:[]},
-alg:{t:'Allergies',o:['NKDA','Penicillin','Sulfa','Codeine','Morphine','Latex','Shellfish','Iodine/contrast','Aspirin','NSAIDs'],s:[]},
-meds:{t:'Medications',o:['Lisinopril','Metoprolol','Amlodipine','Furosemide','Metformin','Insulin','Atorvastatin','Aspirin','Eliquis','Warfarin','Plavix','Levothyroxine','Albuterol','Gabapentin','Omeprazole','Sertraline'],s:[]}};
+alg:{t:'Allergies',o:ALGS,dd:true,s:[]},
+meds:{t:'Medications',o:MEDS,dd:true,s:[]}};
 function jn(a){return a.length<2?a.join(''):a.length==2?a.join(' and '):a.slice(0,-1).join(', ')+', and '+a[a.length-1]}
 var ASSESS=['Alert and oriented x4','Alert and oriented x3','Alert and oriented x2','Alert and oriented x1','Confused at baseline','GCS 15','Speech clear','Slurred speech','Facial droop','PERRL','Moves all extremities','Equal grip strength','Airway patent','Respirations even and unlabored','Labored respirations','Lungs clear bilaterally','Wheezing','Crackles','Diminished lung sounds','Radial pulses strong and regular','Pulses irregular','Skin warm, dry, and pink','Skin pale','Skin diaphoretic','Capillary refill less than 2 seconds','Edema to lower extremities','Abdomen soft and non-tender','Abdomen distended','Pain denied','No signs of trauma','No acute distress'];
 PK.necc={t:'Medical necessity for ambulance transport',s:[],sep:'; ',o:['Patient is bed-confined: unable to get up from bed without assistance, unable to ambulate, and unable to sit in a chair or wheelchair','Patient was bed-confined before and after the ambulance trip','Patient condition contraindicates other means of transportation','Medical condition requires ambulance transport regardless of bed confinement','Emergency situation (accident, injury, or acute illness)','Patient requires restraint to prevent injury to self or others','Patient must remain immobile due to a fracture or possible fracture','Requires advanced airway management','Morbid obesity requiring additional personnel or equipment','Requires oxygen therapy and monitoring during transport','Requires cardiac monitoring during transport','Requires IV or medication monitoring during transport','Requires skilled medical monitoring en route','Altered mental status','Hemodynamic instability','Paralysis or hemiparesis']};
@@ -368,6 +428,11 @@ if(f[0]==='spo2'){if(x&&/^[\d.]+$/.test(x))x+='%';if(x)a.push('SpO2 '+x+(o2?' on
 if(!x)return;if(f[4]&&/^[\d.]+$/.test(x))x+=f[4];a.push(f[2]+' '+x)});
 return a.length?a.join(', '):'{{vitals|vt-'+set+'-bp}}'}
 function pk(k){var p=PK[k],d=$('pk-'+k).querySelector('details');p.open=d?d.open:false;
+if(p.dd){var g='<span>'+p.t+'</span><select class="ddsel" data-dd="'+k+'" aria-label="'+p.t+'"><option value="">Select from list</option>',cur='';if(p.cu&&p.cu.length){g+='<optgroup label="My saved entries">'+p.cu.map(function(o){return '<option>'+esc(o)+'</option>'}).join('')+'</optgroup>'}
+p.o.forEach(function(o){var L=o.charAt(0).toUpperCase();if(L!==cur){if(cur)g+='</optgroup>';cur=L;g+='<optgroup label="'+L+'">'}g+='<option>'+esc(o)+'</option>'});
+g+='</optgroup></select><div class="add"><input type="text" id="add-'+k+'" placeholder="Other: type your own"><button type="button" class="btn" data-add="'+k+'">Add</button></div><div class="chips">';
+p.s.forEach(function(o,i){g+='<button type="button" class="chip on" data-rm="'+k+'" data-i="'+i+'" title="Remove">'+esc(o)+' \u00d7</button>'});
+$('pk-'+k).innerHTML=g+'</div>';return}
 var h='<span>'+p.t+'</span><details'+(p.open?' open':'')+'><summary>Select from list or add your own</summary><div class="chips">';
 p.o.forEach(function(o,i){h+='<button type="button" class="chip" data-pk="'+k+'" data-i="'+i+'" aria-pressed="'+(p.s.indexOf(o)>-1)+'">'+esc(o)+'</button>'});
 h+='</div><div class="add"><input type="text" id="add-'+k+'" placeholder="Other: type your own"><button type="button" class="btn" data-add="'+k+'">Add</button></div></details><div class="chips">';
@@ -380,12 +445,93 @@ if(b.dataset.pk){var o=p.o[+b.dataset.i],i=p.s.indexOf(o);if(i>-1)p.s.splice(i,1
 else if(b.dataset.rm){p.s.splice(+b.dataset.i,1)}
 else{var inp=$('add-'+k),x=inp.value.trim();if(x&&p.s.indexOf(x)<0)p.s.push(x);inp.value='';pk(k);$('add-'+k).focus();render();return}
 pk(k);render()});
+document.addEventListener('change',function(e){var t=e.target,k=t.dataset&&t.dataset.dd;if(!k)return;var x=t.value,p=PK[k];if(x&&p.s.indexOf(x)<0)p.s.push(x);pk(k);render()});
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.id&&e.target.id.indexOf('add-')===0){e.preventDefault();e.target.parentNode.querySelector('button').click()}});
 var oldReset=$('reset').onclick;$('reset').onclick=function(){for(var k in PK)PK[k].s=[];oldReset();['spec','stscale','arrWit','bcpr','rhy','rosc','loc','sscr','imp1','imp2','dreas','dalert','sigR','attC','drvC','rmode','tresp','rsp','tmeth','rpt','mntB','mntC','strk','code','iso','cby','cpc','tmode','carr'].forEach(function(i){$(i).value=''});$('ama').checked=false;$('asa').checked=false;$('xmit').checked=false;['tDisp','tEnr','tScn','tPtc','tDep','tArr','tTrf','tSvc'].forEach(function(i){$(i).value=''});o2Reset();pkAll()};
 $('editBtn').onclick=function(){if(!EDIT){EDIT=true;$('editor').value=plain();$('editor').hidden=false;$('out').hidden=true;$('miss').hidden=true;this.textContent='Regenerate';$('msg').textContent='Editing: form changes will not update this text. Tap Regenerate to rebuild it from the form (this replaces your edits).'}else{EDIT=false;$('editor').hidden=true;$('out').hidden=false;$('miss').hidden=false;this.textContent='Edit text';$('msg').textContent='';render()}};
 function jump(){if(!MISS.length)return;var id=MISS[MI%MISS.length];MI++;var e=id?$(id):null;if(!e)return;var d=e.querySelector('details');if(d)d.open=true;e.scrollIntoView({behavior:'smooth',block:'center'});if(e.matches('input,select,textarea'))e.focus({preventScroll:true})}
 document.addEventListener('click',function(e){if(e.target.id==='nextMiss')jump()});
-svInit();vitAll();pkAll();
+
+/* ---- vitals checks and review list ---- */
+var WARNN=0;
+function checkVals(){var W=[],R=[],bad={};
+function add(id,msg){W.push(msg);bad[id]=1}
+var sets=['pta','base','amb','rvit'];document.querySelectorAll('.xset').forEach(function(e){sets.push(e.dataset.set)});
+var lab={pta:'PTA vitals',base:'Baseline vitals',amb:'Ambulance vitals',rvit:'Vitals'};
+sets.forEach(function(st){var L=lab[st]||'Additional vitals';
+function g(f){var e=$('vt-'+st+'-'+f);return e&&e.offsetParent!==null&&e.value.trim()?e:null}
+function rng(f,lo,hi,nm){var e=g(f);if(!e)return;var n=parseFloat(e.value);if(isNaN(n)||n<lo||n>hi)add(e.id,L+': '+nm+' '+e.value.trim()+' looks unusual')}
+var e=g('bp');if(e){var m=e.value.trim().match(/^(\d{2,3})\s*\/\s*(\d{2,3})$/);if(!m)add(e.id,L+': BP "'+e.value.trim()+'" should look like 120/80');else{var sy=+m[1],di=+m[2];if(sy<50||sy>260||di<20||di>150||di>=sy)add(e.id,L+': BP '+m[0]+' looks unusual')}}
+rng('hr',20,220,'HR');rng('rr',4,60,'RR');rng('spo2',50,100,'SpO2');rng('bgl',20,800,'glucose');
+e=g('temp');if(e){var t=parseFloat(e.value);if(isNaN(t)||t<90||t>108)add(e.id,L+': temp '+e.value.trim()+(t>=30&&t<=45?' looks like Celsius, but \u00b0F is added':' looks unusual'))}});
+function one(id,lo,hi,nm){var e=$(id);if(!e||e.offsetParent===null||!e.value.trim())return;var n=parseFloat(e.value);if(isNaN(n)||n<lo||n>hi)add(id,nm+' '+e.value.trim()+' is out of range ('+lo+' to '+hi+')')}
+one('gcs',3,15,'GCS');one('pnS',0,10,'Pain');one('age',0,120,'Age');
+if(S.t!=='cancel'&&S.o==='refusal'&&$('cap').offsetParent!==null){
+if(!$('cap').checked)R.push('Decision-making capacity is not checked');
+if(!$('wit').value.trim())R.push('No witness name entered');
+if(!$('mc').checked)R.push('Medical control was not contacted (check your protocol)');
+if(!PK.sig.s.length)R.push('No signature sources selected')}
+document.querySelectorAll('.badv').forEach(function(e){e.classList.remove('badv')});
+for(var id in bad)if($(id))$(id).classList.add('badv');
+WARNN=W.length+R.length;
+var w=$('warn');w.hidden=!WARNN;
+w.innerHTML=WARNN?'<b>Please review</b><ul>'+W.concat(R).map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>':''}
+
+/* ---- copy / print guard ---- */
+var CONF='',CONFT=null;
+function guard(label,go){if(!EDIT&&(MISS.length||WARNN)&&CONF!==label){var m=[];if(MISS.length)m.push(MISS.length+' item'+(MISS.length>1?'s':'')+' missing');if(WARNN)m.push(WARNN+' to review');
+$('msg').textContent=m.join(' and ')+'. Tap '+label+' again to continue anyway.';CONF=label;clearTimeout(CONFT);CONFT=setTimeout(function(){CONF='';$('msg').textContent=''},8000);return}
+CONF='';clearTimeout(CONFT);go()}
+var copy0=$('copy').onclick;$('copy').onclick=function(){var me=this;guard('Copy',function(){copy0.call(me)})};
+$('printBtn').onclick=function(){guard('Print / PDF',function(){$('msg').textContent='';
+var t=EDIT?$('editor').value:plain(),pr=document.createElement('div');pr.id='printOut';pr.textContent=t;document.body.appendChild(pr);
+function rm(){if(pr.parentNode)pr.parentNode.removeChild(pr)}
+window.addEventListener('afterprint',rm,{once:true});setTimeout(rm,60000);window.print()})};
+
+/* ---- saved custom list entries ---- */
+var CK='epcr-custom-v1',CU={};
+function cuApply(){for(var k in CU){var p=PK[k];if(!p)continue;if(p.dd)p.cu=CU[k];else CU[k].forEach(function(x){if(p.o.indexOf(x)<0)p.o.push(x)})}}
+function cuLoad(){try{var r=JSON.parse(localStorage.getItem(CK)||'{}');for(var k in r)if(PK[k]&&Array.isArray(r[k]))CU[k]=r[k]}catch(e){}cuApply()}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b||!b.dataset.add)return;
+var k=b.dataset.add,p=PK[k],inp=$('add-'+k),x=inp?inp.value.trim():'';if(!p||!x)return;var lc=x.toLowerCase();
+function has(a){return (a||[]).some(function(o){return o.toLowerCase()===lc})}
+if(has(p.o)||has(CU[k]))return;(CU[k]=CU[k]||[]).push(x);try{localStorage.setItem(CK,JSON.stringify(CU))}catch(er){}cuApply()},true);
+$('clrCu').onclick=function(){for(var k in CU){var p=PK[k];if(!p)continue;if(p.dd)p.cu=[];else CU[k].forEach(function(x){var i=p.o.indexOf(x);if(i>-1)p.o.splice(i,1)})}
+CU={};try{localStorage.removeItem(CK)}catch(e){}pkAll();$('msg').textContent='Saved list entries cleared.';setTimeout(function(){$('msg').textContent=''},3000)};
+
+/* ---- draft autosave ---- */
+var DK='epcr-draft-v1',BASE='',ST=null;
+function snap(){var f={},pk={},x={trans:[],ref:[]};
+document.querySelectorAll('#form input[id],#form select[id],#form textarea[id]').forEach(function(e){if(e.id.indexOf('add-')===0)return;f[e.id]=e.type==='checkbox'?e.checked:e.value});
+for(var k in PK)pk[k]=PK[k].s.slice();
+['trans','ref'].forEach(function(k){document.querySelectorAll('#more-'+k+' .xset').forEach(function(e){x[k].push(e.dataset.set)})});
+return JSON.stringify({f:f,p:pk,x:x})}
+function saveDraft(){try{var cur=snap();if(cur===BASE){localStorage.removeItem(DK);return}
+var d=JSON.parse(cur);d.s={t:S.t,o:S.o};d.at=Date.now();if(EDIT)d.e=$('editor').value;localStorage.setItem(DK,JSON.stringify(d))}catch(e){}}
+function schedSave(){clearTimeout(ST);ST=setTimeout(saveDraft,400)}
+['input','change','click'].forEach(function(ev){document.addEventListener(ev,schedSave,true)});
+document.addEventListener('visibilitychange',function(){if(document.hidden){clearTimeout(ST);saveDraft()}});
+window.addEventListener('pagehide',function(){clearTimeout(ST);saveDraft()});
+function mkSet(k,id){var w=document.createElement('div');w.className='f xset';w.dataset.set=id;
+w.innerHTML='<span>Additional vitals</span><div class="vit" id="vt-'+id+'"></div><button type="button" class="btn alt sm" data-rmv="1" style="margin-top:8px">Remove this set</button>';
+$('more-'+k).appendChild(w);vitFill(id);var n=parseInt(id.slice(1),10);if(n>XN)XN=n}
+function restoreDraft(){var d=null;try{d=JSON.parse(localStorage.getItem(DK)||'null')}catch(e){}
+if(!d||!d.f||!d.at||Date.now()-d.at>864e5){try{localStorage.removeItem(DK)}catch(e){}return}
+try{
+if(d.s){var tb=document.querySelector('#typeSeg [data-k="'+d.s.t+'"]'),ob=document.querySelector('#outSeg [data-o="'+d.s.o+'"]');if(tb)tb.click();if(ob)ob.click()}
+var ex=[];if(d.x)['trans','ref'].forEach(function(k){(d.x[k]||[]).forEach(function(id){mkSet(k,id);ex.push(id)})});
+if(d.p)for(var k in d.p)if(PK[k]&&Array.isArray(d.p[k]))PK[k].s=d.p[k].slice();
+pkAll();
+for(var id in d.f){var e=$(id);if(!e)continue;if(e.type==='checkbox')e.checked=!!d.f[id];else e.value=d.f[id]}
+['pta','base','amb','rvit'].concat(ex).forEach(function(st){var ox=$('vt-'+st+'-ox');if(!ox)return;$('vt-'+st+'-oxbox').hidden=!ox.checked;$('vt-'+st+'-oth').hidden=$('vt-'+st+'-mth').value!=='Other'});
+if(typeof d.e==='string'){$('editBtn').click();$('editor').value=d.e}
+var tm=new Date(d.at);$('draftTxt').textContent='Draft restored from '+tm.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+'.';$('draftBar').hidden=false
+}catch(e){}}
+var reset0=$('reset').onclick;$('reset').onclick=function(){reset0.apply(this,arguments);$('when').selectedIndex=0;$('rwhat').selectedIndex=0;
+try{localStorage.removeItem(DK)}catch(e){}$('draftBar').hidden=true;BASE=snap()};
+$('draftDel').onclick=function(){$('reset').click()};
+if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js').catch(function(){})}
+applyFmt();svInit();vitAll();cuLoad();pkAll();BASE=snap();restoreDraft();
 render();
 </script>
 </body></html>

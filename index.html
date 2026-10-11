@@ -56,7 +56,7 @@ textarea{min-height:64px;resize:vertical}
 .add{display:flex;gap:8px;margin-top:10px}
 .vit{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}.vit label span{font-size:.8rem;margin:0;color:var(--mute);display:block}
 .chip.pair{display:inline-flex;padding:0;overflow:hidden}.pair button{font:inherit;background:none;border:0;color:inherit;padding:6px 10px;cursor:pointer}.pair .x{padding:6px 9px;border-left:1px solid var(--line)}
-.btn.sm{padding:5px 10px;font-size:.85rem}.sv{align-items:center}
+.btn.sm{padding:5px 10px;font-size:.85rem}.svsel{flex:1;min-width:150px;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}.sv{align-items:center}
 .o2{grid-column:1/-1}.o2 .chk{margin-top:6px}.o2 .row{margin-top:8px}
 .xrow{display:flex;gap:6px;margin-top:8px}.xrow input{flex:1;min-width:0}
 .miss{margin:0 0 8px;font-size:.9rem}
@@ -95,8 +95,8 @@ textarea{min-height:64px;resize:vertical}
 
   <fieldset><legend>Dispatch</legend>
     <label class="f"><span>Unit number</span><input type="text" id="unit"></label>
-    <label class="f"><span>Dispatched location</span><input type="text" id="disp"></label>
-    <label class="f" data-t="transfer 911"><span>Drop-off location</span><input type="text" id="drop"></label>
+    <label class="f"><span>Scene</span><input type="text" id="disp"></label>
+    <label class="f" data-t="transfer 911"><span>Destination</span><input type="text" id="drop"></label>
     <label class="f"><span>Transport reason</span><input type="text" id="reason"></label>
     <label class="f"><span>Response mode</span><select id="rmode"><option value="">Select</option><option>emergent</option><option>non-emergent</option><option>emergent downgraded to non-emergent</option><option>non-emergent upgraded to emergent</option></select></label>
     <label class="f"><span>Lights and sirens on response</span><select id="rsp"><option value="">Select</option><option>with lights and sirens</option><option>without lights and sirens</option></select></label>
@@ -235,7 +235,7 @@ function v(id,label){var x=$(id).value.trim();return x?x:'{{'+(label||id)+'|'+id
 function P(s){s=s.trim();return /[.!?]$/.test(s)?s:s+'.'}
 function narrative(){return narrativeX().map(function(x){return x.t})}
 function narrativeX(){
-  var u=v('unit','Unit Number'),d=v('disp','dispatched location'),dr=S.t==='cancel'?'':v('drop','drop off location'),r=v('reason','transport reason'),L=[];
+  var u=v('unit','Unit Number'),d=v('disp','scene'),dr=S.t==='cancel'?'':v('drop','destination'),r=v('reason','transport reason'),L=[];
   function X(k,t){L.push({k:k,t:t})}
   var head=(S.t==='911'||S.t==='cancel')?u+' was dispatched to '+d+' for '+r+'.':u+' was dispatched to '+d+' to transport to '+dr+' for '+r+'.';
   var rm=$('rmode').value,rs=$('rsp').value;if(rm||rs)head+=' '+u+' responded'+(rm?' '+rm:'')+(rs?' '+rs:'')+'.';
@@ -374,7 +374,11 @@ function pv(k,l){var p=PK[k],s=p.s;return s.length?(p.sep?s.join(p.sep):jn(s)):'
 var SV={unit:[],disp:[],drop:[],reason:[],att:[],drv:[]},SVK='epcr-saved-v1';
 try{var raw=localStorage.getItem(SVK);if(raw){var so=JSON.parse(raw);for(var sk in SV)if(Array.isArray(so[sk]))SV[sk]=so[sk]}}catch(e){}
 function svStore(){try{localStorage.setItem(SVK,JSON.stringify(SV))}catch(e){}}
-function svDraw(k){var h='<button type="button" class="btn alt sm" data-svsave="'+k+'">Save entry</button>';
+var SVA={unit:'Unit number',disp:'Scene',drop:'Destination',reason:'Transport reason'};
+function svDraw(k){if(SVA[k]){var L=SV[k].slice().sort(function(a,b){return a.toLowerCase()<b.toLowerCase()?-1:1}),cv=$(k).value.trim(),h='';
+if(L.length){h='<select class="svsel" data-svsel="'+k+'" aria-label="Saved '+SVA[k]+'"><option value="">Saved entries ('+L.length+')</option>'+L.map(function(t){return '<option'+(t===cv?' selected':'')+'>'+esc(t)+'</option>'}).join('')+'</select><button type="button" class="btn alt sm" data-svrm="'+k+'">Delete selected</button>'}
+$('sv-'+k).innerHTML=h;return}
+var h='<button type="button" class="btn alt sm" data-svsave="'+k+'">Save entry</button>';
 SV[k].forEach(function(t,i){h+='<span class="chip pair"><button type="button" data-svfill="'+k+'" data-i="'+i+'">'+esc(t)+'</button><button type="button" class="x" data-svdel="'+k+'" data-i="'+i+'" aria-label="Delete saved entry">\u00d7</button></span>'});
 $('sv-'+k).innerHTML=h}
 function svInit(){for(var k in SV){var d=document.createElement('div');d.className='chips sv';d.id='sv-'+k;$(k).parentNode.appendChild(d);svDraw(k)}}
@@ -382,6 +386,11 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
 if((k=b.dataset.svsave)){var x=$(k).value.trim();if(x&&SV[k].indexOf(x)<0){SV[k].push(x);svStore();svDraw(k)}}
 else if((k=b.dataset.svfill)){$(k).value=SV[k][+b.dataset.i];render()}
 else if((k=b.dataset.svdel)){SV[k].splice(+b.dataset.i,1);svStore();svDraw(k)}});
+document.addEventListener('change',function(e){var t=e.target,k=t.dataset&&t.dataset.svsel;
+if(k){if(t.value){$(k).value=t.value;render()}return}
+if(t.id&&SVA[t.id]){var x=t.value.trim().replace(/\s+/g,' ');if(x&&!SV[t.id].some(function(o){return o.toLowerCase()===x.toLowerCase()})){SV[t.id].push(x);svStore()}svDraw(t.id)}});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b||!b.dataset.svrm)return;var k=b.dataset.svrm,sel=document.querySelector('select[data-svsel="'+k+'"]');
+if(!sel||!sel.value)return;var i=SV[k].indexOf(sel.value);if(i>-1){SV[k].splice(i,1);svStore()}if($(k).value.trim()===sel.value)$(k).value=$(k).value;svDraw(k)});
 var VF=[['bp','BP','BP','120/80',''],['hr','HR','HR','bpm',''],['rr','RR','RR','/min',''],['spo2','SpO2','SpO2','%','%'],['temp','Temp','temp','\u00b0F','\u00b0F'],['bgl','Glucose','BGL','mg/dL',' mg/dL'],['ht','Height','height','ft/in',''],['wt','Weight','weight','lbs',' lbs']];
 var UTK={hx:1,alg:1,meds:1,bls:1,sec:1};
 function uto(set){var c=$('vt-'+set+'-uto');return !!(c&&c.checked)}

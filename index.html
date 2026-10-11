@@ -66,6 +66,13 @@ textarea{min-height:64px;resize:vertical}
 .badv{border-color:#d97706!important;box-shadow:0 0 0 2px rgba(217,119,6,.35)}
 .outhead{flex-wrap:wrap}.outhead>span{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 #printOut{display:none}
+.dd{margin-top:6px}.dd:focus{outline:none}
+.ddlist{display:none;max-height:230px;overflow-y:auto;position:relative;border:1px solid var(--line);border-radius:8px;background:var(--bg);margin-top:6px;-webkit-overflow-scrolling:touch}
+.dd:focus-within .ddlist{display:block}
+.ddh{position:sticky;top:0;padding:3px 12px;font-weight:700;font-size:.8rem;background:var(--ph);color:var(--phink);z-index:1}
+.ddi{display:block;width:100%;text-align:left;padding:9px 12px;border:0;border-bottom:1px solid var(--line);background:transparent;font:inherit;color:inherit;cursor:pointer}
+.ddi.sel{font-weight:700}.ddi.sel:before{content:"\2713  "}
+.ddi.hl{background:var(--acc);color:#fff}
 .uto{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;align-items:center}.uto input[type=text]{flex:1;min-width:160px}
 .chip[data-uto]{border-style:dashed}
 @media print{body>*:not(#printOut){display:none!important}#printOut{display:block!important;white-space:pre-wrap;font:12pt/1.5 Georgia,"Times New Roman",serif;color:#000;background:#fff;padding:0}}
@@ -444,10 +451,11 @@ return a.length?a.join(', '):'{{vitals|vt-'+set+'-bp}}'}
 function pk(k){var p=PK[k],d=$('pk-'+k).querySelector('details');p.open=d?d.open:false;
 var ut=UTK[k]?'<div class="chips"><button type="button" class="chip'+(p.uto?' on':'')+'" data-uto="'+k+'" aria-pressed="'+!!p.uto+'">Unable to obtain</button></div>':'';
 if(UTK[k]&&p.uto){$('pk-'+k).innerHTML='<span>'+p.t+'</span>'+ut+'<input type="text" id="utor-'+k+'" placeholder="Reason (optional)" style="margin-top:8px">';$('utor-'+k).value=p.ur||'';return}
-if(p.dd){var g='<span>'+p.t+'</span>'+ut+'<select class="ddsel" data-dd="'+k+'" aria-label="'+p.t+'"><option value="">Select from list</option>',cur='';if(p.cu&&p.cu.length){g+='<optgroup label="My saved entries">'+p.cu.map(function(o){return '<option>'+esc(o)+'</option>'}).join('')+'</optgroup>'}
-p.o.forEach(function(o){var L=o.charAt(0).toUpperCase();if(L!==cur){if(cur)g+='</optgroup>';cur=L;g+='<optgroup label="'+L+'">'}g+='<option>'+esc(o)+'</option>'});
-g+='</optgroup></select><div class="add"><input type="text" id="add-'+k+'" placeholder="Other: type your own"><button type="button" class="btn" data-add="'+k+'">Add</button></div><div class="chips">';
-p.s.forEach(function(o,i){g+='<button type="button" class="chip on" data-rm="'+k+'" data-i="'+i+'" title="Remove">'+esc(o)+' \u00d7</button>'});
+if(p.dd){var ord=(p.cu||[]).concat(p.o),nc=(p.cu||[]).length,cur='';p.ord=ord;
+var g='<span>'+p.t+'</span>'+ut+'<div class="dd" tabindex="-1"><div class="add"><input type="text" id="add-'+k+'" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type to search or add your own"><button type="button" class="btn" data-add="'+k+'">Add</button></div><p class="hint" id="ddn-'+k+'" hidden>No match in the list. Tap Add to use what you typed.</p><div class="ddlist" id="ddl-'+k+'" data-hl="">';
+ord.forEach(function(o,n){var L=n<nc?'My saved entries':(o==='NKDA'?'Common':o.charAt(0).toUpperCase());if(L!==cur){cur=L;g+='<div class="ddh">'+L+'</div>'}g+='<button type="button" class="ddi'+(p.s.indexOf(o)>-1?' sel':'')+'" data-ddp="'+k+'" data-i="'+n+'">'+esc(o)+'</button>'});
+g+='</div></div><div class="chips">';
+p.s.forEach(function(o,n){g+='<button type="button" class="chip on" data-rm="'+k+'" data-i="'+n+'" title="Remove">'+esc(o)+' ×</button>'});
 $('pk-'+k).innerHTML=g+'</div>';return}
 var h='<span>'+p.t+'</span>'+ut+'<details'+(p.open?' open':'')+'><summary>Select from list or add your own</summary><div class="chips">';
 p.o.forEach(function(o,i){h+='<button type="button" class="chip" data-pk="'+k+'" data-i="'+i+'" aria-pressed="'+(p.s.indexOf(o)>-1)+'">'+esc(o)+'</button>'});
@@ -467,6 +475,24 @@ var oldReset=$('reset').onclick;$('reset').onclick=function(){for(var k in PK)PK
 $('editBtn').onclick=function(){if(!EDIT){EDIT=true;$('editor').value=plain();$('editor').hidden=false;$('out').hidden=true;$('miss').hidden=true;this.textContent='Regenerate';$('msg').textContent='Editing: form changes will not update this text. Tap Regenerate to rebuild it from the form (this replaces your edits).'}else{EDIT=false;$('editor').hidden=true;$('out').hidden=false;$('miss').hidden=false;this.textContent='Edit text';$('msg').textContent='';render()}};
 function jump(){if(!MISS.length)return;var id=MISS[MI%MISS.length];MI++;var e=id?$(id):null;if(!e)return;var d=e.querySelector('details');if(d)d.open=true;e.scrollIntoView({behavior:'smooth',block:'center'});if(e.matches('input,select,textarea'))e.focus({preventScroll:true})}
 document.addEventListener('click',function(e){if(e.target.id==='nextMiss')jump()});
+
+/* ---- type-ahead search in the dropdown lists ---- */
+function ddFind(k,q){var o=PK[k].ord||[],a=-1,b=-1,c=-1;q=q.toLowerCase();
+for(var i=0;i<o.length;i++){var t=o[i].toLowerCase();if(t.indexOf(q)===0){a=i;break}if(b<0&&(' '+t.replace(/[(\/)]/g,' ')).indexOf(' '+q)>-1)b=i;if(c<0&&t.indexOf(q)>-1)c=i}
+return a>-1?a:(b>-1?b:c)}
+function ddGo(k,i){var L=$('ddl-'+k);if(!L)return;var pr=L.querySelector('.hl');if(pr)pr.classList.remove('hl');
+if(i<0){L.dataset.hl='';return}var el=L.querySelector('.ddi[data-i="'+i+'"]');if(!el)return;el.classList.add('hl');L.dataset.hl=i;
+var top=el.offsetTop-40;if(top<0)top=0;L.scrollTop=top}
+function ddPick(k,i){var p=PK[k],o=p.ord&&p.ord[i];if(o==null)return;var x=p.s.indexOf(o);if(x>-1)p.s.splice(x,1);else p.s.push(o);pk(k);render();
+if(document.activeElement&&document.activeElement.blur)document.activeElement.blur()}
+document.addEventListener('input',function(e){var id=e.target.id||'';if(id.indexOf('add-')!==0)return;var k=id.slice(4),p=PK[k];if(!p||!p.dd)return;
+var q=e.target.value.trim(),n=$('ddn-'+k),L=$('ddl-'+k);if(!q){ddGo(k,-1);if(L)L.scrollTop=0;if(n)n.hidden=true;return}
+var i=ddFind(k,q);ddGo(k,i);if(n)n.hidden=i>-1});
+document.addEventListener('keydown',function(e){var id=e.target.id||'';if(id.indexOf('add-')!==0)return;var k=id.slice(4),p=PK[k];if(!p||!p.dd)return;var L=$('ddl-'+k);if(!L)return;
+var cur=L.dataset.hl===''?-1:+L.dataset.hl;
+if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();var nx=e.key==='ArrowDown'?cur+1:cur-1;if(nx<0)nx=0;if(nx>=p.ord.length)nx=p.ord.length-1;ddGo(k,nx)}
+else if(e.key==='Enter'&&cur>-1){e.preventDefault();e.stopPropagation();ddPick(k,cur)}},true);
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b||!b.dataset.ddp)return;ddPick(b.dataset.ddp,+b.dataset.i)});
 
 /* ---- vitals checks and review list ---- */
 var WARNN=0;

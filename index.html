@@ -156,9 +156,28 @@ textarea{min-height:64px;resize:vertical}
     <div class="sp" data-sp="sepsis" hidden><label class="f"><span>Sepsis screen</span><select id="sscr"><option value="">Select</option><option>positive</option><option>negative</option></select></label><label class="f"><span>Suspected source of infection</span><input type="text" id="src" placeholder="urinary, pulmonary, wound"></label><div class="f pick" id="pk-sps"></div></div>
   </fieldset>
   <fieldset data-t="transfer 911" data-o="transport"><legend>Transport</legend>
+    <label class="chk"><input type="checkbox" id="scuse"> Stair chair</label>
+    <div id="scwrap" hidden>
+      <div class="row">
+        <label class="f"><span>Stair chair: transferred from</span><input type="text" id="scfrom" placeholder="bed, couch, floor"></label>
+        <label class="f"><span>Stair chair: transferred via</span><input type="text" id="scvia" placeholder="2-person lift, slide sheet"></label>
+      </div>
+      <div class="row">
+        <label class="f"><span>Straps on stair chair</span><input type="number" id="scstr" min="0" placeholder="3"></label>
+        <label class="f"><span>Time (optional)</span><input type="text" id="sctime" placeholder="1432"></label>
+      </div>
+    </div>
     <div class="row">
-      <label class="f"><span>Transferred from / to</span><input type="text" id="xfer" placeholder="bed to stretcher"></label>
+      <label class="f"><span>Transferred from</span><input type="text" id="xfrom" placeholder="bed, couch, floor"></label>
+      <label class="f"><span>Transferred to</span><input type="text" id="xto" placeholder="stretcher, stair chair"></label>
+    </div>
+    <div class="row">
       <label class="f"><span>Method of transfer</span><input type="text" id="xmeth" placeholder="slide sheet, 3-person lift"></label>
+      <label class="f"><span>Time (optional)</span><input type="text" id="xtime" placeholder="1435"></label>
+    </div>
+    <div class="row">
+      <label class="f"><span>Cot straps</span><input type="number" id="cstr" min="0" placeholder="5"></label>
+      <label class="f"><span>Cot rails</span><input type="number" id="crail" min="0" placeholder="2"></label>
     </div>
     <div class="f"><span>Baseline vitals</span><div class="vit" id="vt-base"></div></div>
     <div class="f"><span>Vitals reassessed in ambulance</span><div class="vit" id="vt-amb"></div></div>
@@ -172,11 +191,23 @@ textarea{min-height:64px;resize:vertical}
       <label class="f"><span>At drop-off, from (bed, stretcher)</span><input type="text" id="afrom"></label>
       <label class="f"><span>Onto (bed, chair)</span><input type="text" id="ato"></label>
     </div>
-    <label class="f"><span>Method of transfer at drop-off</span><input type="text" id="ameth"></label>
+    <div class="row">
+      <label class="f"><span>Method of transfer at drop-off</span><input type="text" id="ameth"></label>
+      <label class="f"><span>Time (optional)</span><input type="text" id="atime" placeholder="1500"></label>
+    </div>
+    <label class="chk"><input type="checkbox" id="scout"> Stair chair used at drop-off</label>
+    <div id="scowrap" hidden>
+      <div class="row">
+        <label class="f"><span>Stair chair: transferred to</span><input type="text" id="scoto" placeholder="bed, chair"></label>
+        <label class="f"><span>Stair chair: transferred via</span><input type="text" id="scovia" placeholder="2-person lift"></label>
+      </div>
+      <label class="f"><span>Time (optional)</span><input type="text" id="scotime" placeholder="1502"></label>
+    </div>
     <label class="f"><span>Condition upon arrival</span><select id="carr"><option value="">Select</option><option>stable</option><option>unchanged</option><option>improved</option><option>deteriorated</option></select></label>
     <label class="f"><span>Reason for destination</span><select id="dreas"><option value="">Select</option><option>closest appropriate facility</option><option>patient choice</option><option>specialty center</option><option>physician request</option><option>facility or insurance request</option></select></label>
     <label class="f"><span>Alert called</span><select id="dalert"><option value="">Select</option><option>stroke alert</option><option>STEMI alert</option><option>trauma alert</option><option>sepsis alert</option><option>cardiac arrest alert</option></select></label>
     <div class="f pick" id="pk-eq"></div>
+    <div id="bpwrap" hidden><label class="f"><span>Additional personnel requested for lift assist (bariatric cot, power cot, lift assist device)</span><input type="text" id="bpers" placeholder="number or agency, e.g. 2 fire personnel"></label></div>
     <label class="f" data-t="transfer"><span>Report given to (nurse name)</span><input type="text" id="rn"></label>
     <div class="f pick" data-t="transfer" id="pk-necc"></div>
   </fieldset>
@@ -273,8 +304,12 @@ function narrativeX(){
     tail().forEach(function(t){X('end',t)});
     return L;
   }
-  X('tx','Patient was transferred '+v('xfer','from / to')+' via '+v('xmeth','method of transfer')+'.');
-  X('tx','Patient was strapped x 5, Rails x 2.');
+  function at(id){var t=$(id).value.trim();return t?'At '+t+', patient ':'Patient '}
+  if($('scuse').checked){var sn=$('scstr').value.trim()||'3';X('tx',at('sctime')+'was transferred from '+v('scfrom','from')+' to stairchair via '+v('scvia','method')+'. Strapped x '+sn+'.')}
+  X('tx',at('xtime')+'was transferred from '+v('xfrom','from')+' to '+v('xto','to')+' via '+v('xmeth','method of transfer')+'.');
+  var cs=$('cstr').value.trim()||'5',cr=$('crail').value.trim()||'2';
+  X('tx','Patient was strapped x '+cs+(+cr>0?', Rails x '+cr:'')+'.');
+  var eqs=PK.eq.s;if(eqs.indexOf('Bariatric cot')>-1||eqs.indexOf('Power cot')>-1||eqs.indexOf('Lift assist device')>-1)X('tx','Additional personnel were requested for lift assist: '+v('bpers','number / agency')+'.');
   X('vit',uto('base')?'Baseline vitals were unable to be obtained'+utoR('base')+'.':'Baseline vitals were '+P(vv('base')));
   X('eval',uto('amb')?'Patient was transferred into ambulance where vitals were unable to be reassessed'+utoR('amb')+'.':'Patient was transferred into ambulance where vitals were reassessed. '+P(vv('amb')));
   var tm=$('tmeth').value;if(tm==='Other')tm=$('tmethO').value.trim();
@@ -283,7 +318,8 @@ function narrativeX(){
   var dl=destline();if(dl)X('trn',dl);
   extraSets('more-trans').forEach(function(t){X('eval',t)});
   X('exam',PK.sec.uto?'Secondary assessment was unable to be obtained'+utr('sec')+'.':'Secondary assessment was obtained. '+P(pv('sec','assessment findings')));
-  X('trn','Upon arrival at '+dr+', patient was transferred from '+v('afrom','bed, stretcher')+' onto '+v('ato','bed, chair')+' via '+v('ameth','method of transfer')+'.'+($('carr').value?' Patient condition upon arrival was '+$('carr').value+'.':''));
+  X('trn','Upon arrival at '+dr+', '+($('atime').value.trim()?'at '+$('atime').value.trim()+', ':'')+'patient was transferred from '+v('afrom','bed, stretcher')+' onto '+v('ato','bed, chair')+' via '+v('ameth','method of transfer')+'.'+($('carr').value?' Patient condition upon arrival was '+$('carr').value+'.':''));
+  if($('scout').checked)X('trn',($('scotime').value.trim()?'At '+$('scotime').value.trim()+', patient':'Patient')+' was transferred from stairchair to '+v('scoto','to')+' via '+v('scovia','method')+'.');
   if(S.t==='transfer')X('trn','Patient care, paperwork, and verbal report was transferred to '+v('rn','name of nurse')+'.');
   X('trn',sigline());
   if(S.t==='transfer')X('trn','Patient requires transportation by ambulance due to '+P(pv('necc','medical necessity')));
@@ -328,6 +364,8 @@ function render(){
   $('nurseWrap').hidden=S.t==='cancel'||(S.t==='911'&&!$('snf').checked);
   $('rptO').hidden=$('rpt').value!=='Other';
   $('tmethO').hidden=$('tmeth').value!=='Other';
+  $('scwrap').hidden=!$('scuse').checked;$('scowrap').hidden=!$('scout').checked;
+  (function(){var q=PK.eq.s;$('bpwrap').hidden=!(q.indexOf('Bariatric cot')>-1||q.indexOf('Power cot')>-1||q.indexOf('Lift assist device')>-1)})();
   document.querySelectorAll('.sp').forEach(function(e){e.hidden=e.dataset.sp!==$('spec').value});
   $('imp1O').hidden=$('imp1').value!=='Other';$('imp2O').hidden=$('imp2').value!=='Other';
   $('cbyO').hidden=$('cby').value!=='Other';
@@ -342,7 +380,7 @@ function render(){
 document.querySelectorAll('#typeSeg button').forEach(function(b){b.onclick=function(){S.t=b.dataset.k;document.querySelectorAll('#typeSeg button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});render()}});
 document.querySelectorAll('#outSeg button').forEach(function(b){b.onclick=function(){S.o=b.dataset.o;document.querySelectorAll('#outSeg button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});render()}});
 $('form').addEventListener('input',render);$('form').addEventListener('change',render);
-$('reset').onclick=function(){document.querySelectorAll('input[type=text],input[type=number],textarea').forEach(function(e){e.value=e.id==='risks'?'worsening of condition, permanent injury, or death':''});$('sex').value='';['snf','mc'].forEach(function(i){$(i).checked=false});$('cap').checked=true;render()};
+$('reset').onclick=function(){if(!confirm('Clear all fields and start a new call?'))return false;document.querySelectorAll('input[type=text],input[type=number],textarea').forEach(function(e){e.value=e.id==='risks'?'worsening of condition, permanent injury, or death':''});$('sex').value='';['snf','mc','scuse','scout'].forEach(function(i){$(i).checked=false});$('cap').checked=true;render()};
 $('copy').onclick=function(){
   var t=EDIT?$('editor').value:plain(),m=$('msg');
   function ok(){m.textContent='Copied.'}
@@ -363,7 +401,7 @@ PK.necc={t:'Medical necessity for ambulance transport',s:[],sep:'; ',o:['Patient
 PK.mob={t:'Mobility',s:[],sep:'; ',o:['Unable to bear weight','Unable to stand','Unable to ambulate','Unable to sit upright in a wheelchair','Bed-confined','Requires assistance of two or more staff','Ambulatory with assistance','Uses wheelchair at baseline','Uses walker','Contractures','Paralysis or hemiparesis']};
 PK.tx={t:'Treatment provided',s:[],sep:'; ',o:['Oxygen applied','IV access established','Cardiac monitor applied','12-lead ECG obtained','Blood glucose checked','Bleeding controlled','Splint applied','Spinal motion restriction','Suctioned airway','Patient positioned for comfort']};
 PK.dev={t:'Lines and devices',s:[],sep:'; ',o:['IV in place','IV pump infusing','PICC line','Foley catheter','Tracheostomy','Feeding tube','Ostomy','Surgical drain','Wound vac','Dialysis access','Oxygen concentrator']};
-PK.eq={t:'Equipment used',s:[],sep:'; ',o:['Stair chair','Bariatric cot','Slide sheet','Lift assist device','Power cot','Seat belt and restraints applied']};
+PK.eq={t:'Equipment used',s:[],sep:'; ',o:['Bariatric cot','Slide sheet','Lift assist device','Power cot','Seat belt and restraints applied']};
 PK.sig={t:'Signatures obtained from',s:[],o:['Patient','Nurse','Facility representative','Receiving facility staff','Authorized representative']};
 PK.stk={t:'Stroke findings',s:[],sep:'; ',o:['Balance loss','Vision changes','Facial droop','Arm weakness','Leg weakness','Speech difficulty','Aphasia','Sudden severe headache']};
 PK.inj={t:'Injuries noted',s:[],sep:'; ',o:['Head laceration','Neck pain','Chest wall tenderness','Abdominal tenderness','Pelvic instability','Extremity deformity','Open fracture','Burn','Bleeding controlled']};
@@ -598,7 +636,7 @@ for(var id in d.f){var e=$(id);if(!e)continue;if(e.type==='checkbox')e.checked=!
 if(typeof d.e==='string'){$('editBtn').click();$('editor').value=d.e}
 var tm=new Date(d.at);$('draftTxt').textContent='Draft restored from '+tm.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+'.';$('draftBar').hidden=false
 }catch(e){}}
-var reset0=$('reset').onclick;$('reset').onclick=function(){reset0.apply(this,arguments);$('when').selectedIndex=0;$('rwhat').selectedIndex=0;
+var reset0=$('reset').onclick;$('reset').onclick=function(){if(reset0.apply(this,arguments)===false)return;$('when').selectedIndex=0;$('rwhat').selectedIndex=0;
 for(var k in PK){PK[k].uto=false;PK[k].ur=''}pkAll();try{localStorage.removeItem(DK)}catch(e){}$('draftBar').hidden=true;BASE=snap()};
 $('draftDel').onclick=function(){$('reset').click()};
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js').catch(function(){})}

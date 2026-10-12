@@ -80,6 +80,10 @@ textarea{min-height:64px;resize:vertical}
 @media print{body>*:not(#printOut){display:none!important}#printOut{display:block!important;white-space:pre-wrap;font:12pt/1.5 Georgia,"Times New Roman",serif;color:#000;background:#fff;padding:0}}
 .tool{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin:0 0 12px}.tool .f{margin:0;flex:1;min-width:190px}
 .spfix{font-size:.85rem;margin-top:4px;color:var(--phink);background:var(--ph);border-radius:6px;padding:3px 8px;display:inline-block}.spfix button{font:inherit;font-size:.85rem;margin-left:6px;cursor:pointer}
+.arrbar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--card);border-top:2px solid var(--acc);padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:center;flex-wrap:wrap}.arrbar span{flex:1;min-width:150px;font-size:.88rem;color:var(--mute)}
+body.arr{padding-bottom:90px}body.arr #form fieldset input,body.arr #form fieldset select,body.arr #form fieldset textarea,body.arr #form fieldset button{pointer-events:none}
+body.arr #form fieldset *{-webkit-user-select:none;user-select:none}body.arr #form fieldset{cursor:pointer}
+.mvsel{outline:3px solid var(--acc);outline-offset:3px;border-radius:8px;background:var(--ph)}
 [hidden]{display:none!important}
 </style></head>
 <body>
@@ -92,6 +96,7 @@ textarea{min-height:64px;resize:vertical}
     <button type="button" class="btn alt sm" id="tplGo">Apply</button>
     <button type="button" class="btn alt sm" id="lastGo">Reuse last call setup</button>
     <button type="button" class="btn alt sm" id="swapSD">Swap scene / destination</button>
+    <button type="button" class="btn alt sm" id="arrGo">Rearrange fields</button>
   </div>
   <div class="seg" id="typeSeg" role="group" aria-label="Call type">
     <button data-k="transfer" aria-pressed="true">Transfer</button>
@@ -131,7 +136,7 @@ textarea{min-height:64px;resize:vertical}
     </div>
     <label class="f"><span>Chief complaint</span><input type="text" id="cc"></label>
     <label class="f"><span>Secondary complaint (optional)</span><input type="text" id="cc2"></label>
-    <label class="chk" data-t="911"><input type="checkbox" id="snf"> Scene is a nursing facility</label>
+    <label class="f" data-t="transfer 911"><span>Patient picked up from</span><select id="pfac"><option value="">Home / other location</option><option value="hospital">Hospital</option><option value="nursing">Nursing facility</option></select></label>
     <label class="f" id="nurseWrap"><span>Nurse stated (reason for transport / ED visit)</span><input type="text" id="nreason"></label>
     <div class="f pick" id="pk-hx"></div>
     <div class="f pick" id="pk-alg"></div>
@@ -286,6 +291,7 @@ textarea{min-height:64px;resize:vertical}
   </div>
 </section>
 </main>
+<div class="arrbar" id="arrBar" hidden><span id="arrTxt">Tap a field, or a section title, then use Up or Down.</span><button type="button" class="btn alt sm" id="arrUp">&#9650; Up</button><button type="button" class="btn alt sm" id="arrDn">&#9660; Down</button><button type="button" class="btn alt sm" id="arrRs">Reset layout</button><button type="button" class="btn sm" id="arrDone">Done</button></div>
 <script>
 var S={t:'transfer',o:'transport'};var MISS=[],MI=0,EDIT=false;
 function $(i){return document.getElementById(i)}
@@ -307,7 +313,7 @@ function narrativeX(){
   X('scene','Upon arrival at '+d+', '+u+' arrived onscene to find '+v('age','age')+' year old '+v('sex','sex')+' '+v('pos','position')+' on '+v('surf','floor, chair, bed')+'.'+o2Found());
   var cc='Patient complained of '+v('cc','chief complaint')+'.';
   var c2=$('cc2').value.trim();if(c2)cc+=' Patient also complained of '+P(c2);
-  if(S.t==='transfer'||$('snf').checked)cc+=' Nurse stated '+P(v('nreason','reason for transport'));
+  if($('pfac').value)cc+=' Nurse stated '+P(v('nreason','reason for transport'));
   X('cc',cc);
   var al=PK.alg.s,hxT=PK.hx.uto?'Patient history was unable to be obtained'+utr('hx')+'.':'Patient has a history of '+pv('hx','history')+'.',alT=PK.alg.uto?'Patient allergies were unable to be obtained'+utr('alg')+'.':((al.length===1&&al[0]==='NKDA')?'Patient has no known drug allergies.':'Patient is allergic to '+pv('alg','allergies')+'.'),mdT=PK.meds.uto?'Patient medications were unable to be obtained'+utr('meds')+'.':'Patient takes '+pv('meds','medications')+'.';X('hx',hxT+' '+alT+' '+mdT+codeIso());
   if(S.t==='transfer')X('vit',uto('pta')?'PTA vitals were unable to be obtained'+utoR('pta')+'.':'PTA vitals were obtained. '+P(vv('pta')));
@@ -391,7 +397,7 @@ function render(){
     e.hidden=!ok;
   });
   $('outSeg').hidden=S.t==='cancel';
-  $('nurseWrap').hidden=S.t==='cancel'||(S.t==='911'&&!$('snf').checked);
+  $('nurseWrap').hidden=S.t==='cancel'||!$('pfac').value;
   $('rptO').hidden=$('rpt').value!=='Other';
   $('tmethO').hidden=$('tmeth').value!=='Other';
   ['xmeth','scvia','ameth','scovia'].forEach(function(i){$(i+'O').hidden=$(i).value!=='Other'});
@@ -412,7 +418,7 @@ function render(){
 document.querySelectorAll('#typeSeg button').forEach(function(b){b.onclick=function(){S.t=b.dataset.k;document.querySelectorAll('#typeSeg button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});render()}});
 document.querySelectorAll('#outSeg button').forEach(function(b){b.onclick=function(){S.o=b.dataset.o;document.querySelectorAll('#outSeg button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});render()}});
 $('form').addEventListener('input',render);$('form').addEventListener('change',render);
-$('reset').onclick=function(){if(!confirm('Clear all fields and start a new call?'))return false;document.querySelectorAll('input[type=text],input[type=number],textarea').forEach(function(e){e.value=e.id==='risks'?'worsening of condition, permanent injury, or death':''});$('sex').value='';['snf','mc','scuse','scout'].forEach(function(i){$(i).checked=false});$('cap').checked=true;render()};
+$('reset').onclick=function(){if(!confirm('Clear all fields and start a new call?'))return false;document.querySelectorAll('input[type=text],input[type=number],textarea').forEach(function(e){e.value=e.id==='risks'?'worsening of condition, permanent injury, or death':''});$('sex').value='';['mc','scuse','scout'].forEach(function(i){$(i).checked=false});$('cap').checked=true;render()};
 $('copy').onclick=function(){
   var t=EDIT?$('editor').value:plain(),m=$('msg');
   function ok(){m.textContent='Copied.'}
@@ -687,7 +693,7 @@ el.className='wc'+(m&&c>m?' over':'');
 $('wct').textContent=w+' words, '+c+' characters'+(m?(c>m?' ('+(c-m)+' over limit)':' ('+(m-c)+' left)'):'');var ci=$('cmax');if(document.activeElement!==ci)ci.value=m||''}
 document.addEventListener('input',function(e){if(e.target.id!=='cmax')return;try{localStorage.setItem('epcr-cmax',e.target.value||'0')}catch(er){}wcUpdate(EDIT?$('editor').value:plain())},true);
 $('editor').addEventListener('input',function(){wcUpdate(this.value)});
-var BKK=[CK,SVK,'ePCRfmt',STK,'epcr-cmax'];
+var BKK=[CK,SVK,'ePCRfmt',STK,'epcr-cmax','epcr-layout-v1'];
 function bkData(){var o={app:'epcr-narrative-writer',v:1};BKK.forEach(function(k){try{var r=localStorage.getItem(k);if(r!==null)o[k]=r}catch(e){}});return JSON.stringify(o,null,1)}
 function bkLoad(txt){var o;try{o=JSON.parse(txt)}catch(e){$('msg').textContent='That is not a valid backup.';return}
 if(!o||o.app!=='epcr-narrative-writer'){$('msg').textContent='That is not a valid backup.';return}
@@ -715,9 +721,9 @@ var d=[['bp','systolic blood pressure',20],['hr','heart rate',15],['spo2','SpO2'
 d.forEach(function(x){var a=num('base',x[0]),b=num('amb',x[0]);if(isNaN(a)||isNaN(b)||Math.abs(b-a)<x[2])return;
 var u=x[0]==='spo2'?'%':'';o.push(x[1]+' '+(b>a?'increased':'decreased')+' from '+a+u+' to '+b+u)});
 return o.length?'Compared to baseline, '+o.join(', ')+'.':''}
-var TPL={nh:{t:'transfer',o:'transport',f:{tmeth:'BLS ambulance',tresp:'non-emergent',tmode:'without lights and sirens',dreas:'closest appropriate facility'}},
+var TPL={nh:{t:'transfer',o:'transport',f:{pfac:'nursing',tmeth:'BLS ambulance',tresp:'non-emergent',tmode:'without lights and sirens',dreas:'closest appropriate facility'}},
 dial:{t:'transfer',o:'transport',f:{tmeth:'BLS ambulance',tresp:'non-emergent',tmode:'without lights and sirens'}},
-h2h:{t:'transfer',o:'transport',f:{tmeth:'ALS ambulance',tresp:'non-emergent',tmode:'without lights and sirens',dreas:'specialty center'}},
+h2h:{t:'transfer',o:'transport',f:{pfac:'hospital',tmeth:'ALS ambulance',tresp:'non-emergent',tmode:'without lights and sirens',dreas:'specialty center'}},
 e911:{t:'911',o:'transport',f:{tmeth:'ALS ambulance',tresp:'emergent',tmode:'with lights and sirens',dreas:'closest appropriate facility'}},
 n911:{t:'911',o:'transport',f:{tmeth:'BLS ambulance',tresp:'non-emergent',tmode:'without lights and sirens'}},
 lift:{t:'911',o:'refusal',f:{fallOn:true}}};
@@ -726,7 +732,7 @@ function setMode(t,o){var tb=document.querySelector('#typeSeg [data-k="'+t+'"]')
 $('tplGo').onclick=function(){var T=TPL[$('tpl').value];if(!T){$('msg').textContent='Pick a template first.';return}
 setMode(T.t,T.o);for(var k in T.f)setF(k,T.f[k]);render();$('msg').textContent='Template applied.';setTimeout(function(){$('msg').textContent=''},3000)};
 $('swapSD').onclick=function(){var a=$('disp'),b=$('drop'),t=a.value;a.value=b.value;b.value=t;a.dispatchEvent(new Event('input',{bubbles:true}));b.dispatchEvent(new Event('input',{bubbles:true}))};
-var LASTK='epcr-last-v1',CARRY=['unit','att','attC','drv','drvC','disp','drop','reason','tmeth','tmethO','tresp','tmode','rpt','rptO','dreas','xto','xmeth','xmethO','afrom','ameth','ameth','amethO','scuse','scstr','scvia','scviaO','scout','scovia','scoviaO','cstr','crail','bpers','ppe','snf'];
+var LASTK='epcr-last-v1',CARRY=['unit','att','attC','drv','drvC','disp','drop','reason','tmeth','tmethO','tresp','tmode','rpt','rptO','dreas','xto','xmeth','xmethO','afrom','ameth','ameth','amethO','scuse','scstr','scvia','scviaO','scout','scovia','scoviaO','cstr','crail','bpers','ppe'];
 function saveLast(){var f={};CARRY.forEach(function(i){var e=$(i);if(e)f[i]=e.type==='checkbox'?e.checked:e.value});
 localStorage.setItem(LASTK,JSON.stringify({s:{t:S.t,o:S.o},f:f,eq:PK.eq.s.slice(),sig:PK.sig.s.slice()}))}
 $('lastGo').onclick=function(){var d=null;try{d=JSON.parse(localStorage.getItem(LASTK)||'null')}catch(e){}
@@ -745,7 +751,31 @@ var THK='epcr-theme',TH='auto';try{TH=localStorage.getItem(THK)||'auto'}catch(e)
 function applyTheme(){var r=document.documentElement;if(TH==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',TH);$('themeBtn').textContent='Theme: '+TH.charAt(0).toUpperCase()+TH.slice(1)}
 $('themeBtn').onclick=function(){TH=TH==='auto'?'dark':TH==='dark'?'light':'auto';try{localStorage.setItem(THK,TH)}catch(e){}applyTheme()};
 applyTheme();
-var reset2=$('reset').onclick;$('reset').onclick=function(){if(reset2.apply(this,arguments)===false)return;$('trendOn').checked=true;['tpl','ppe','fwhere','finj','fthin'].forEach(function(i){$(i).selectedIndex=0});document.querySelectorAll('.spfix').forEach(function(x){x.remove()});render();BASE=snap()};
+var reset2=$('reset').onclick;$('reset').onclick=function(){if(reset2.apply(this,arguments)===false)return;$('trendOn').checked=true;['tpl','ppe','fwhere','finj','fthin','pfac'].forEach(function(i){$(i).selectedIndex=0});document.querySelectorAll('.spfix').forEach(function(x){x.remove()});render();BASE=snap()};
+/* ---- rearrange fields ---- */
+var LAYK='epcr-layout-v1',ARR=false,ARSEL=null,FORM=$('form');
+function ukey(el){if(el.tagName==='FIELDSET'){var l=el.querySelector('legend');return l?'fs:'+l.textContent.trim():''}
+if(el.tagName==='LEGEND')return '';if(el.id)return el.id;var d=el.querySelector('[id]');return d?d.id:''}
+function units(p){return Array.prototype.filter.call(p.children,function(c){return c.tagName!=='LEGEND'&&ukey(c)&&(p!==FORM||c.tagName==='FIELDSET')})}
+function layGet(){var o={sec:[],f:{}};units(FORM).forEach(function(fs){var k=ukey(fs);o.sec.push(k);o.f[k]=units(fs).map(ukey)});return o}
+function laySave(){try{localStorage.setItem(LAYK,JSON.stringify(layGet()))}catch(e){}}
+function reorder(p,keys){var us=units(p),by={};us.forEach(function(u){by[ukey(u)]=u});var ord=[];keys.forEach(function(k){if(by[k]){ord.push(by[k]);delete by[k]}});us.forEach(function(u){if(by[ukey(u)])ord.push(u)});
+var marks=us.map(function(u){var m=document.createComment('');p.insertBefore(m,u);return m});
+ord.forEach(function(u,i){marks[i].parentNode.insertBefore(u,marks[i].nextSibling)});marks.forEach(function(m){m.remove()})}
+function layApply(){var o=null;try{o=JSON.parse(localStorage.getItem(LAYK)||'null')}catch(e){}if(!o)return;
+try{reorder(FORM,o.sec||[]);units(FORM).forEach(function(fs){var k=ukey(fs);if(o.f&&o.f[k])reorder(fs,o.f[k])})}catch(e){}}
+function arrSel(u){if(ARSEL)ARSEL.classList.remove('mvsel');ARSEL=u;if(u){u.classList.add('mvsel');$('arrTxt').textContent='Selected: '+(u.tagName==='FIELDSET'?'section "'+(u.querySelector('legend')||{}).textContent+'"':(ukey(u)||'field'))+'. Use Up or Down.'}}
+function arrUnit(t){var fs=t.closest&&t.closest('#form fieldset');if(!fs)return null;if(t.closest('legend')&&t.closest('legend').parentNode===fs)return fs;
+var n=t;while(n&&n.parentNode!==fs)n=n.parentNode;if(n&&n.tagName!=='LEGEND'&&ukey(n))return n;return fs}
+document.addEventListener('click',function(e){if(!ARR||!e.target.closest)return;if(e.target.closest('#arrBar'))return;var u=arrUnit(e.target);if(!u)return;e.preventDefault();e.stopPropagation();arrSel(u)},true);
+function arrMove(dir){var u=ARSEL;if(!u)return;var p=u.parentNode,n=dir<0?u.previousElementSibling:u.nextElementSibling;
+while(n&&(n.hidden||!(units(p).indexOf(n)>-1)))n=dir<0?n.previousElementSibling:n.nextElementSibling;if(!n)return;
+if(dir<0)p.insertBefore(u,n);else p.insertBefore(u,n.nextElementSibling);u.scrollIntoView({block:'center',behavior:'smooth'});laySave()}
+function arrOn(v){ARR=v;document.body.classList.toggle('arr',v);$('arrBar').hidden=!v;arrSel(null);if(v)$('arrTxt').textContent='Tap a field, or a section title, then use Up or Down.'}
+$('arrGo').onclick=function(){arrOn(true)};$('arrDone').onclick=function(){arrOn(false)};
+$('arrUp').onclick=function(){arrMove(-1)};$('arrDn').onclick=function(){arrMove(1)};
+$('arrRs').onclick=function(){if(!confirm('Put all fields back in the original order?'))return;try{localStorage.removeItem(LAYK)}catch(e){}location.reload()};
+layApply();
 applyFmt();svInit();vitAll();cuLoad();pkAll();stApply();render();BASE=snap();restoreDraft();
 render();
 </script>
